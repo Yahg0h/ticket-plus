@@ -169,7 +169,7 @@ async def get_user_by_phone(phone_number: str) -> dict | None:
 
 async def get_user_by_id(user_id: int) -> dict | None:
     """
-    Fetch a user by ID from the database.
+    Fetch a user's info by their ID from the database.
     
     Args:
         user_id: User ID
@@ -217,8 +217,28 @@ async def create_user(
     # Connect to database
     async with engine.connect() as conn:
         # Search for a already existing user with the same email and/or phone number
-        contact_query = await conn.execute(text("SELECT * FROM users WHERE email = :email or phone_number = :phone_number"), {"email": email, "phone_number": phone_number})
-        existing_contact = contact_query.mappings().first()
+        # Build dyanmic query
+        conditions = []
+        params = {}
+
+        email = email if email else None
+        phone_number = phone_number if phone_number else None
+        
+        if email:
+            conditions.append("email = :email")
+            params["email"] = email
+        
+        if phone_number:
+            conditions.append("phone_number = :phone_number")
+            params["phone_number"] = phone_number
+        
+        # If there is any condition, execute the query
+        if conditions:
+            query_str = "SELECT * FROM users WHERE " + " OR ".join(conditions)
+            contact_query = await conn.execute(text(query_str), params)
+            existing_contact = contact_query.mappings().first()
+        else:
+            existing_contact = None
 
         # If it exists, raise error
         if existing_contact:

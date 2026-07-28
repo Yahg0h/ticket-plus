@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title mb-4">👤 Meu Perfil</h1>
+
+                <!-- Informações do Usuário -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Nome:</strong></p>
+                        <p>{{ user.name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>CPF:</strong></p>
+                        <p>{{ user.cpf }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong></p>
+                        <p>{{ user.email or "Não informado" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Telefone:</strong></p>
+                        <p>{{ user.phone_number or "Não informado" }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Estado:</strong></p>
+                        <p>{{ user.state }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Cidade:</strong></p>
+                        <p>{{ user.city }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Membro desde:</strong></p>
+                        <p>{{ user.created_at.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Última atualização:</strong></p>
+                        <p>{{ user.updated_at.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                </div>
+
+                <!-- Status de Admin -->
+                {% if user.is_admin %}
+                    <div class="alert alert-info mb-4">
+                        <strong>⭐ Você é um administrador do sistema</strong>
+                    </div>
+                {% endif %}
+
+                <!-- Botões de Ação -->
+                <div class="d-flex gap-2">
+                    <a href="/users/profile/edit" class="btn btn-primary">✏️ Editar Perfil</a>
+                    <a href="/users/settings" class="btn btn-secondary">⚙️ Configurações</a>
+                    <a href="/" class="btn btn-outline-secondary">← Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

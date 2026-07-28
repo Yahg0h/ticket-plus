@@ -112,13 +112,37 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     """Schema for updating user data (PUT)"""
     name: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = None
-    phone_number: str | None = Field(default=None, pattern=PHONE_REGEX, max_length=20)
+    email: str | None = None
+    phone_number: str | None = Field(default=None, max_length=20)
     state: str | None = Field(default=None, max_length=255)
     city: str | None = Field(default=None, max_length=255)
-    password: str | None = Field(default=None, min_length=6, max_length=255)
+    password: str | None = Field(default=None, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_fields(self) -> "UserUpdate":
+        """Validate optional fields only if provided"""
+        
+        # Validate email only if provided
+        if self.email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, self.email):
+                raise ValueError("Formato de email inválido.")
+        
+        # Validate phone only if provided
+        if self.phone_number:
+            import re
+            PHONE_REGEX = r"^(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9?\d{4})-?\d{4}$"
+            if not re.match(PHONE_REGEX, self.phone_number):
+                raise ValueError("Formato de telefone inválido.")
+        
+        # Validate password only if provided
+        if self.password and len(self.password) < 6:
+                raise ValueError("Senha deve ter no mínimo 6 caracteres.")
+        
+        return self
 
 
 class UserResponse(UserBase):

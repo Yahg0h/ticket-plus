@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Perfil - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">✏️ Editar Perfil</h1>
+
+                <form method="POST" action="/users/profile/edit">
+                    <!-- Nome -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome Completo</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="name" 
+                            name="name" 
+                            value="{{ user.name or '' }}"
+                        >
+                        <small class="form-text text-muted">Deixe em branco para não alterar</small>
+                    </div>
+
+                    <!-- Email (Opcional) -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email" 
+                            value="{{ user.email or '' }}"
+                        >
+                        <small class="form-text text-muted">Deixe em branco para não alterar</small>
+                    </div>
+
+                    <!-- Telefone (Opcional) -->
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Telefone</label>
+                        <input 
+                            type="tel" 
+                            class="form-control" 
+                            id="phone_number" 
+                            name="phone_number" 
+                            value="{{ user.phone_number or '' }}"
+                        >
+                        <small class="form-text text-muted">Deixe em branco para não alterar</small>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="mb-3">
+                        <label for="state" class="form-label">Estado</label>
+                        <select 
+                            class="form-select" 
+                            id="state" 
+                            name="state"
+                        >
+                            <option value="">Deixe em branco para não alterar</option>
+                            <!-- Estados serão preenchidos via JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Cidade -->
+                    <div class="mb-3">
+                        <label for="city" class="form-label">Cidade</label>
+                        <select 
+                            class="form-select" 
+                            id="city" 
+                            name="city"
+                            disabled
+                        >
+                            <option value="">Deixe em branco para não alterar</option>
+                        </select>
+                    </div>
+
+                    <!-- Senha -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Nova Senha (Opcional)</label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Deixe em branco para não alterar"
+                            minlength="6"
+                        >
+                        <small class="form-text text-muted">Mínimo de 6 caracteres</small>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
+                        <a href="/users/profile" class="btn btn-outline-secondary">← Voltar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para carregar estados e cidades -->
+<script>
+    let brazilData = {};
+    let currentState = "{{ user.state or '' }}";
+
+    // Carregar dados de estados e cidades
+    fetch('/static/brazil-states-cities.json')
+        .then(response => response.json())
+        .then(data => {
+            brazilData = data.BR.states;
+            populateStates();
+        })
+        .catch(error => console.error('Erro ao carregar dados:', error));
+
+    // Preencher dropdown de estados
+    function populateStates() {
+        const stateSelect = document.getElementById('state');
+        const states = Object.keys(brazilData).sort();
+
+        states.forEach(stateCode => {
+            const option = document.createElement('option');
+            option.value = stateCode;
+            option.textContent = brazilData[stateCode].name;
+            
+            // Seleciona o estado atual do usuário
+            if (stateCode === currentState) {
+                option.selected = true;
+            }
+            
+            stateSelect.appendChild(option);
+        });
+
+        // Se há um estado atual, carrega as cidades
+        if (currentState) {
+            loadCities(currentState);
+        }
+    }
+
+    // Atualizar cidades quando estado mudar
+    document.getElementById('state').addEventListener('change', function() {
+        if (this.value) {
+            loadCities(this.value);
+        }
+    });
+
+    // Carregar cidades para um estado específico
+    function loadCities(stateCode) {
+        const citySelect = document.getElementById('city');
+        const currentCity = "{{ user.city or '' }}";
+        
+        // Limpar cidades anteriores
+        citySelect.innerHTML = '<option value="">Deixe em branco para não alterar</option>';
+        citySelect.disabled = true;
+
+        if (stateCode && brazilData[stateCode]) {
+            const cities = brazilData[stateCode].cities || [];
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                
+                // Seleciona a cidade atual do usuário
+                if (city === currentCity) {
+                    option.selected = true;
+                }
+                
+                citySelect.appendChild(option);
+            });
+            citySelect.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

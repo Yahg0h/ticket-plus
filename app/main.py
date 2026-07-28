@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
 from app.routes.auth import router as auth_router
+from app.routes.users import router as users_router
 from app.services.auth_service import get_current_user_optional
 
 # Configure application
@@ -60,3 +61,6 @@ async def root(request: Request, user_id: int | None = Depends(get_current_user_
 
 # Auth router
 app.include_router(auth_router)
+
+# Users router
+app.include_router(users_router)
