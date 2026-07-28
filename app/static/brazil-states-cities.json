@@ -17,7 +17,8 @@
           "Mâncio Lima",
           "Manoel Urbano",
           "Marechal Thaumaturgo",
-          "Plácido de Castro"
+          "Plácido de Castro",
+          "Rio Branco"
         ]
       },
       "AL": {
@@ -153,7 +154,7 @@
         ]
       },
       "AP": {
-        "name": "Aapá",
+        "name": "Amapá",
         "cities": [
           "Amapá",
           "Calçoene",
@@ -468,7 +469,8 @@
           "Planaltino",
           "Planalto",
           "Poções",
-          "Pojuca"
+          "Pojuca",
+          "Salvador"
         ]
       },
       "CE": {

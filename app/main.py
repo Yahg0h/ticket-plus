@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
+from app.routes.auth import router as auth_router
+from app.services.auth_service import get_current_user_optional
 
 # Configure application
 app = FastAPI(
@@ -42,4 +44,19 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     request.session["flash_type"] = "error"  # Message type (error, success, info)
     return response
 
-# Root Route (TO BE HERE)
+# Root route
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request, user_id: int | None = Depends(get_current_user_optional)):
+    # If the user isn't logged in (after token verification with dependency), redirect to /login
+    if user_id is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    # Else, if the user is logged in, render index.html
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {"request": request, "user_id": user_id}
+    )
+
+# Auth router
+app.include_router(auth_router)

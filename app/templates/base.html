@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TicketPlus{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">🎫 TicketPlus</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user_id %}
+                        <!-- Usuário está logado -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/eventos">Explorar Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/meus-ingressos">Meus Ingressos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/meus-eventos">Meus Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/perfil">Perfil</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/logout">Sair</a>
+                        </li>
+                    {% else %}
+                        <!-- Usuário não está logado -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/eventos">Explorar Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/login">Entrar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/register">Cadastro</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Container principal -->
+    <div class="container mt-4">
+        <!-- Mensagens Flash -->
+        {% if request.session.get("flash") %}
+            {% set flash_msg = request.session.pop("flash") %}
+            {% set flash_type = request.session.pop("flash_type", "info") %}
+            
+            <div class="alert alert-{{ flash_type }} alert-dismissible fade show" role="alert">
+                {{ flash_msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+        {% endif %}
+
+        <!-- Conteúdo da página -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts da página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

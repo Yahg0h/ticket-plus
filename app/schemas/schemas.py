@@ -64,8 +64,8 @@ class TicketStatus(str, Enum):
 # ==========================================
 class UserBase(BaseModel):
     name: str = Field(..., max_length=255)
-    email: EmailStr | None = None
-    phone_number: str | None = Field(default=None, pattern=PHONE_REGEX, max_length=20)
+    email: str | None = None
+    phone_number: str | None = Field(default=None, max_length=20)
     cpf: str = Field(..., pattern=CPF_REGEX, max_length=14)
     state: str = Field(..., max_length=255)
     city: str = Field(..., max_length=255)
@@ -73,7 +73,21 @@ class UserBase(BaseModel):
     @model_validator(mode="after")
     def validate_contact(self) -> "UserBase":
         if not self.email and not self.phone_number:
-            raise ValueError("The user must provide at least one email address or phone number.")
+            raise ValueError("Deve fornecer email ou telefone.")
+        
+        # Validate email only if provided
+        if self.email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, self.email):
+                raise ValueError("Formato de email inválido.")
+        
+        # Validate phone only if provided
+        if self.phone_number:
+            import re
+            if not re.match(PHONE_REGEX, self.phone_number):
+                raise ValueError("Formato de telefone inválido.")
+        
         return self
 
 
