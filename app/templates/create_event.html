@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Evento - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">🎪 Criar Novo Evento</h1>
+
+                <form method="POST" action="/events/create" enctype="multipart/form-data">
+                    <!-- Título do Evento -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título do Evento *</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="title" 
+                            name="title" 
+                            placeholder="Ex: Show de Música Ao Vivo"
+                            required
+                        >
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea 
+                            class="form-control" 
+                            id="description" 
+                            name="description" 
+                            rows="4" 
+                            placeholder="Descreva seu evento..."
+                        ></textarea>
+                    </div>
+
+                    <!-- URL do Banner -->
+                    <div class="mb-3">
+                        <label for="banner_url" class="form-label">URL da Imagem do Evento</label>
+                        <input 
+                            type="url" 
+                            class="form-control" 
+                            id="banner_url" 
+                            name="banner_url" 
+                            placeholder="https://exemplo.com/imagem.jpg"
+                        >
+                        <small class="form-text text-muted">Deixe em branco para usar imagem padrão</small>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Categoria *</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Selecione uma categoria</option>
+                            <option value="entertainment">🎬 Entretenimento</option>
+                            <option value="corporate">🏢 Corporativo</option>
+                            <option value="academic">🎓 Acadêmico</option>
+                            <option value="social">👥 Social</option>
+                            <option value="sports">⚽ Esportes</option>
+                            <option value="marketing">📢 Marketing</option>
+                            <option value="workshop">🛠️ Workshop</option>
+                            <option value="other">📋 Outro</option>
+                        </select>
+                    </div>
+
+                    <!-- Localização -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="state" class="form-label">Estado *</label>
+                                <select 
+                                    class="form-select" 
+                                    id="state" 
+                                    name="state" 
+                                    required
+                                >
+                                    <option value="">Selecione o estado</option>
+                                    <!-- Estados serão preenchidos via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="city" class="form-label">Cidade *</label>
+                                <select 
+                                    class="form-select" 
+                                    id="city" 
+                                    name="city" 
+                                    required
+                                    disabled
+                                >
+                                    <option value="">Selecione a cidade</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Endereço *</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="address" 
+                                    name="address" 
+                                    placeholder="Rua, número..."
+                                    required
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datas -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Data e Hora de Início *</label>
+                                <input 
+                                    type="datetime-local" 
+                                    class="form-control" 
+                                    id="start_date" 
+                                    name="start_date" 
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Data e Hora de Término *</label>
+                                <input 
+                                    type="datetime-local" 
+                                    class="form-control" 
+                                    id="end_date" 
+                                    name="end_date" 
+                                    required
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Capacidade -->
+                    <div class="mb-4">
+                        <label for="total_capacity" class="form-label">Capacidade Total de Pessoas *</label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="total_capacity" 
+                            name="total_capacity" 
+                            placeholder="Ex: 500"
+                            min="1"
+                            required
+                        >
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg flex-grow-1">✅ Criar Evento</button>
+                        <a href="/events/my-events" class="btn btn-outline-secondary btn-lg">← Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para carregar estados e cidades -->
+<script>
+    let brazilData = {};
+
+    // Carregar dados de estados e cidades
+    fetch('/static/brazil-states-cities.json')
+        .then(response => response.json())
+        .then(data => {
+            brazilData = data.BR.states;
+            populateStates();
+        })
+        .catch(error => console.error('Erro ao carregar dados:', error));
+
+    // Preencher dropdown de estados
+    function populateStates() {
+        const stateSelect = document.getElementById('state');
+        const states = Object.keys(brazilData).sort();
+
+        states.forEach(stateCode => {
+            const option = document.createElement('option');
+            option.value = stateCode;
+            option.textContent = brazilData[stateCode].name;
+            stateSelect.appendChild(option);
+        });
+    }
+
+    // Atualizar cidades quando estado mudar
+    document.getElementById('state').addEventListener('change', function() {
+        const stateCode = this.value;
+        const citySelect = document.getElementById('city');
+        
+        // Limpar cidades anteriores
+        citySelect.innerHTML = '<option value="">Selecione a cidade</option>';
+        citySelect.disabled = true;
+
+        if (stateCode && brazilData[stateCode]) {
+            const cities = brazilData[stateCode].cities || [];
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+            citySelect.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

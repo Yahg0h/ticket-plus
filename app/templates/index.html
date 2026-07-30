@@ -12,14 +12,14 @@
         {% if user_id %}
             <!-- User is logged in -->
             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a href="/eventos" class="btn btn-primary btn-lg">Explorar Eventos</a>
+                <a href="/events" class="btn btn-primary btn-lg">Explorar Eventos</a>
                 <a href="/meus-ingressos" class="btn btn-info btn-lg">Meus Ingressos</a>
-                <a href="/meus-eventos" class="btn btn-success btn-lg">Meus Eventos</a>
+                <a href="/events/my-events" class="btn btn-success btn-lg">Meus Eventos</a>
             </div>
         {% else %}
             <!-- User is not logged in -->
             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a href="/eventos" class="btn btn-primary btn-lg">Explorar Eventos</a>
+                <a href="/events" class="btn btn-primary btn-lg">Explorar Eventos</a>
                 <a href="/auth/login" class="btn btn-outline-primary btn-lg">Entrar</a>
                 <a href="/auth/register" class="btn btn-success btn-lg">Criar Conta</a>
             </div>
@@ -68,7 +68,7 @@
         <div class="alert alert-info text-center mb-5">
             <h4>🎪 Quer organizar um evento?</h4>
             <p class="mb-3">Crie seu próprio evento e comece a vender ingressos hoje mesmo!</p>
-            <a href="/eventos/criar" class="btn btn-info btn-lg">Criar Novo Evento</a>
+            <a href="/events/create" class="btn btn-info btn-lg">Criar Novo Evento</a>
         </div>
     {% else %}
         <div class="alert alert-warning text-center mb-5">
@@ -87,7 +87,7 @@
         <div class="col-md-4 mb-3">
             <h5>🔗 Links Úteis</h5>
             <ul class="list-unstyled small">
-                <li><a href="/eventos" class="text-decoration-none">Explorar Eventos</a></li>
+                <li><a href="/events" class="text-decoration-none">Explorar Eventos</a></li>
                 <li><a href="/sobre" class="text-decoration-none">Sobre Nós</a></li>
                 <li><a href="/contato" class="text-decoration-none">Contato</a></li>
             </ul>

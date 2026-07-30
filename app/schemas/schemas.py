@@ -173,7 +173,6 @@ class EventBase(BaseModel):
 
 class EventCreate(EventBase):
     """Schema for registering an event (POST)"""
-    organizer_id: int
 
 
 class EventUpdate(BaseModel):
@@ -214,7 +213,6 @@ class TicketTypeBase(BaseModel):
 
 class TicketTypeCreate(TicketTypeBase):
     """Schema for registering an event ticket type"""
-    event_id: int
 
 
 class TicketTypeUpdate(BaseModel):
