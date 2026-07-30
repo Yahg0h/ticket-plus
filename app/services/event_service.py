@@ -267,38 +267,38 @@ async def update_event(
                 updates.append("total_capacity = :total_capacity")
                 params["total_capacity"] = total_capacity
 
-            # Before verifying, convert start_date and end_date to aware so comparisons between offset-aware to offset-aware can occour
-            if not start_date.tzinfo:
-                start_date = start_date.replace(tzinfo=timezone.utc)
-            if not end_date.tzinfo:
-                end_date = end_date.replace(tzinfo=timezone.utc)
+        # Before verifying, convert start_date and end_date to aware so comparisons between offset-aware to offset-aware can occour
+        if not start_date.tzinfo:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        if not end_date.tzinfo:
+            end_date = end_date.replace(tzinfo=timezone.utc)
 
-            if start_date:
-                # Check if the start date is changed to before today
-                now = datetime.now(timezone.utc)
-                
-                # Se start_date já é datetime, compare direto
-                if start_date < now:
-                    raise ValueError("It is not possible to change the start date of an event that has already started.")
-                else:
-                    # Else, update
-                    updates.append("start_date = :start_date")
-                    params["start_date"] = start_date
+        if start_date:
+            # Check if the start date is changed to before today
+            now = datetime.now(timezone.utc)
+            
+            # Se start_date já é datetime, compare direto
+            if start_date < now:
+                raise ValueError("It is not possible to change the start date of an event that has already started.")
+            else:
+                # Else, update
+                updates.append("start_date = :start_date")
+                params["start_date"] = start_date
 
-            if end_date:
-                # Check if the event end_date is early than the event's current start_date
-                event_end = existing_event["end_date"]
-                
-                if end_date < event_end:
-                    raise ValueError("New event end date cannot be earlier than the original start date.")
-                else:
-                    # Else, update
-                    updates.append("end_date = :end_date")
-                    params["end_date"] = end_date
+        if end_date:
+            # Check if the event end_date is early than the event's current start_date
+            event_end = existing_event["end_date"]
+            
+            if end_date < event_end:
+                raise ValueError("New event end date cannot be earlier than the original start date.")
+            else:
+                # Else, update
+                updates.append("end_date = :end_date")
+                params["end_date"] = end_date
 
-            if start_date and end_date and end_date < start_date:
-                # Check if the event new end_date is early than the new start_date
-                raise ValueError("New event end date cannot be earlier than the new start_date.")
+        if start_date and end_date and end_date < start_date:
+            # Check if the event new end_date is early than the new start_date
+            raise ValueError("New event end date cannot be earlier than the new start_date.")
 
         if not updates:
             # If there wan't any updates, just return True for what's current registered

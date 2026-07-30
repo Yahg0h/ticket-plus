@@ -47,6 +47,8 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     buyer_id INT NOT NULL,
     event_id INT NOT NULL,
+    ticket_type_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
     total_amount INT NOT NULL, -- Soma dos valores em centavos
     payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
     stripe_payment_id VARCHAR(255) NULL,

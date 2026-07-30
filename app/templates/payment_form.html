@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-6">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="mb-2">💳 Pagamento Seguro</h1>
+            <p class="text-muted">Insira os dados do seu cartão</p>
+        </div>
+
+        <!-- Payment Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <!-- Order Summary -->
+                <div class="alert alert-light mb-4 p-3 border">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="mb-2">📦 Resumo do Pedido</h6>
+                            <p class="mb-0 small">
+                                <strong>ID do Pedido:</strong> #{{ order_id }}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <p class="mb-2 small">
+                                <strong>{{ quantity }} ingresso{{ 's' if quantity != 1 else '' }}</strong>
+                            </p>
+                            <h5 class="mb-0 text-primary">
+                                R$ {{ "%.2f" | format(total_amount / 100) }}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stripe Payment Form -->
+                <form id="payment-form" method="POST">
+                    <!-- Stripe Card Element -->
+                    <div class="mb-4">
+                        <label for="card-element" class="form-label fw-bold">Dados do Cartão 🎫</label>
+                        <div 
+                            id="card-element" 
+                            class="form-control py-3 px-3" 
+                            style="height: 50px; background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 0.375rem;"
+                        ></div>
+                        <div id="card-errors" class="text-danger mt-2 small" role="alert"></div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label fw-bold">Email</label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email"
+                            placeholder="seu.email@example.com"
+                            required
+                        >
+                        <small class="text-muted">Seus ingressos serão enviados para este email</small>
+                    </div>
+
+                    <!-- Hidden field for client secret -->
+                    <input type="hidden" id="client_secret" value="{{ client_secret }}">
+                    <input type="hidden" id="order_id" value="{{ order_id }}">
+
+                    <!-- Security Info -->
+                    <div class="alert alert-info small mb-4">
+                        <strong>🔒 Segurança:</strong> Seu pagamento é processado de forma segura via Stripe. Seus dados de cartão não são armazenados em nossos servidores.
+                    </div>
+
+                    <!-- Loading Spinner (hidden by default) -->
+                    <div id="loading-spinner" class="text-center mb-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Processando...</span>
+                        </div>
+                        <p class="text-muted mt-2 small">Processando seu pagamento...</p>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-grid gap-2">
+                        <button 
+                            type="submit" 
+                            id="submit-btn" 
+                            class="btn btn-primary btn-lg fw-bold"
+                        >
+                            Pagar R$ {{ "%.2f" | format(total_amount / 100) }}
+                        </button>
+                    </div>
+
+                    <!-- Back Button -->
+                    <div class="d-grid gap-2 mt-2">
+                        <a href="/checkout/{{ order_id }}/back" class="btn btn-outline-secondary">
+                            Voltar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="alert alert-warning small">
+            <strong>ℹ️ Teste:</strong> Use cartão de teste <code>4242 4242 4242 4242</code> com qualquer data futura e CVC.
+        </div>
+    </div>
+</div>
+
+<!-- Stripe JS Library -->
+<script src="https://js.stripe.com/v3/"></script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Stripe
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+
+    // Handle real-time validation errors
+    cardElement.on('change', function(event) {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    // Handle form submission
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const clientSecret = document.getElementById('client_secret').value;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Show loading spinner
+        submitBtn.disabled = true;
+        loadingSpinner.style.display = 'block';
+
+        // Confirm payment with Stripe
+        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    email: document.getElementById('email').value
+                }
+            }
+        });
+
+        if (error) {
+            // Show error message
+            document.getElementById('card-errors').textContent = error.message;
+            submitBtn.disabled = false;
+            loadingSpinner.style.display = 'none';
+        } else if (paymentIntent.status === 'succeeded') {
+            // Payment successful - redirect to success page
+            window.location.href = '/checkout/success';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Pedidos - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        <!-- Header -->
+        <div class="mb-5">
+            <h1 class="mb-2">📜 Histórico de Pedidos</h1>
+            <p class="text-muted">Veja todos os seus pedidos anteriores</p>
+        </div>
+
+        <!-- Empty State -->
+        {% if not orders %}
+            <div class="alert alert-info text-center py-5">
+                <div style="font-size: 60px; margin-bottom: 15px;">🛒</div>
+                <h5>Nenhum pedido encontrado</h5>
+                <p class="text-muted mb-3">Você ainda não fez nenhuma compra.</p>
+                <a href="/events" class="btn btn-primary">Explorar Eventos</a>
+            </div>
+        {% else %}
+            <!-- Orders List -->
+            <div class="row g-3">
+                {% for order in orders %}
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <!-- Order Header -->
+                                <div class="row align-items-center mb-3 pb-3 border-bottom">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-1">Pedido #{{ order["id"] }}</h6>
+                                        <small class="text-muted">
+                                            {{ order["created_at"].strftime('%d de %B de %Y às %H:%M') if order["created_at"] else 'N/A' }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <!-- Status Badges -->
+                                        <div class="mb-2">
+                                            {% if order["payment_status"] == "paid" %}
+                                                <span class="badge bg-success">Pagamento Pago ✅</span>
+                                            {% elif order["payment_status"] == "pending" %}
+                                                <span class="badge bg-warning">Pagamento Pendente ⏳</span>
+                                            {% elif order["payment_status"] == "failed" %}
+                                                <span class="badge bg-danger">Pagamento Falhou ❌</span>
+                                            {% elif order["payment_status"] == "refunded" %}
+                                                <span class="badge bg-secondary">Reembolsado 🔄</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if order["order_status"] == "confirmed" %}
+                                                <span class="badge bg-info">Confirmado</span>
+                                            {% elif order["order_status"] == "pending" %}
+                                                <span class="badge bg-warning">Pendente</span>
+                                            {% elif order["order_status"] == "cancelled" %}
+                                                <span class="badge bg-danger">Cancelado</span>
+                                            {% elif order["order_status"] == "completed" %}
+                                                <span class="badge bg-success">Concluído</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Order Details -->
+                                <div class="row mb-3">
+                                    <div class="col-md-4 mb-3">
+                                        <p class="mb-1 small text-muted">Evento</p>
+                                        <p class="mb-0 fw-bold">Evento #{{ order["event_id"] }}</p>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <p class="mb-1 small text-muted">Valor Total</p>
+                                        <p class="mb-0 fw-bold text-primary">
+                                            R$ {{ "%.2f" | format(order["total_amount"] / 100) }}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <p class="mb-1 small text-muted">ID Transação Stripe</p>
+                                        <p class="mb-0 small text-monospace">
+                                            {% if order["stripe_payment_id"] %}
+                                                {{ order["stripe_payment_id"][:20] }}...
+                                            {% else %}
+                                                <span class="text-muted">Não processado</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Additional Info -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-2">
+                                        <p class="mb-1 small text-muted">Chave de Idempotência</p>
+                                        <p class="mb-0 small text-monospace text-truncate">
+                                            {{ order["idempotency_key"] }}
+                                        </p>
+                                    </div>
+                                    {% if order["completed_at"] %}
+                                        <div class="col-md-6 mb-2">
+                                            <p class="mb-1 small text-muted">Concluído em</p>
+                                            <p class="mb-0 small">
+                                                {{ order["completed_at"].strftime('%d/%m/%Y às %H:%M') }}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {% if order["order_status"] == "confirmed" or order["order_status"] == "completed" %}
+                                        <a href="/meus-ingressos?order_id={{ order['id'] }}" class="btn btn-sm btn-primary">
+                                            Ver Ingressos 🎫
+                                        </a>
+                                    {% endif %}
+                                    
+                                    {% if order["payment_status"] == "paid" %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                                            Pagamento Recebido
+                                        </button>
+                                    {% elif order["payment_status"] == "pending" %}
+                                        <button class="btn btn-sm btn-outline-warning" disabled>
+                                            Aguardando Pagamento
+                                        </button>
+                                    {% endif %}
+
+                                    <a href="/events" class="btn btn-sm btn-outline-primary">
+                                        Mais Eventos
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">📊 Resumo</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Total de Pedidos</p>
+                            <p class="mb-0 fw-bold fs-5">{{ orders | length }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Pedidos Confirmados</p>
+                            <p class="mb-0 fw-bold fs-5 text-success">
+                                {{ orders | selectattr("order_status", "equalto", "confirmed") | list | length }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Valor Total Gasto</p>
+                            <p class="mb-0 fw-bold fs-5 text-primary">
+                                {% set total = 0 %}
+                                {% for order in orders %}
+                                    {% if order["payment_status"] == "paid" or order["payment_status"] == "completed" %}
+                                        {% set total = total + order["total_amount"] %}
+                                    {% endif %}
+                                {% endfor %}
+                                R$ {{ "%.2f" | format(total / 100) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2 mt-4">
+                <a href="/events" class="btn btn-primary btn-lg">
+                    Continuar Comprando 🛒
+                </a>
+                <a href="/" class="btn btn-outline-secondary">
+                    Voltar à Página Inicial
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

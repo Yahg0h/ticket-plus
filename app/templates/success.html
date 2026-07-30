@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento Confirmado - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+        <!-- Success Header -->
+        <div class="text-center mb-5">
+            <div class="mb-4">
+                <span style="font-size: 80px;">✅</span>
+            </div>
+            <h1 class="mb-2">Pagamento Confirmado!</h1>
+            <p class="text-muted lead">Seus ingressos foram gerados com sucesso</p>
+        </div>
+
+        <!-- Order Details Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">📋 Detalhes do Pedido</h5>
+
+                <!-- Order Info Grid -->
+                <div class="row mb-4 pb-3 border-bottom">
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">ID do Pedido</p>
+                        <p class="mb-0 fw-bold">
+                            #{{ order["id"] }}
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">Data</p>
+                        <p class="mb-0 fw-bold">
+                            {{ order["created_at"].strftime('%d/%m/%Y às %H:%M') if order["created_at"] else 'N/A' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="row mb-4 pb-3 border-bottom">
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">Status do Pagamento</p>
+                        <p class="mb-0">
+                            <span class="badge bg-success">{{ order["payment_status"].upper() }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">Status do Pedido</p>
+                        <p class="mb-0">
+                            <span class="badge bg-info">{{ order["order_status"].upper() }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="row mb-4 pb-3 border-bottom">
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">Valor Total</p>
+                        <p class="mb-0 fw-bold fs-5">
+                            R$ {{ "%.2f" | format(order["total_amount"] / 100) }}
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <p class="mb-2 small text-muted">Stripe Payment ID</p>
+                        <p class="mb-0 small text-monospace">
+                            {% if order["stripe_payment_id"] %}
+                                {{ order["stripe_payment_id"][:20] }}...
+                            {% else %}
+                                Processando
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Completed At -->
+                {% if order["completed_at"] %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2 small text-muted">Concluído em</p>
+                            <p class="mb-0 small">
+                                {{ order["completed_at"].strftime('%d/%m/%Y às %H:%M') }}
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="alert alert-info mb-4">
+            <h6 class="mb-3">📧 Próximos Passos</h6>
+            <ol class="mb-0 small">
+                <li>Um email de confirmação foi enviado para você</li>
+                <li>Seus ingressos estarão disponíveis em "Meus Ingressos"</li>
+                <li>Guarde o link ou screenshot do ingresso para entrada no evento</li>
+                <li>Qualquer dúvida? Entre em contato pelo email de suporte</li>
+            </ol>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <a href="/meus-ingressos" class="btn btn-primary btn-lg">
+                Ver Meus Ingressos 🎫
+            </a>
+            <a href="/events" class="btn btn-outline-primary btn-lg">
+                Continuar Comprando
+            </a>
+            <a href="/" class="btn btn-outline-secondary btn-lg">
+                Voltar à Página Inicial
+            </a>
+        </div>
+
+        <!-- Support Info -->
+        <div class="alert alert-light mt-5 text-center small">
+            <p class="mb-2">
+                <strong>Precisa de ajuda?</strong>
+            </p>
+            <p class="mb-0">
+                Entre em contato conosco pelo email: <strong>support@ticketplus.com</strong>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
