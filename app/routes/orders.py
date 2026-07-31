@@ -34,15 +34,6 @@ async def payment_success(
 ):
     """
     Render success page after payment (requires login).
-    
-    Hint:
-    1. Get order_id from query params or session
-    2. Fetch order: order = await get_order_by_id(order_id)
-    3. Return templates.TemplateResponse(..., {
-        "request": request,
-        "order": order,
-        "user_id": user_id
-    })
     """
     # Get order_id from session
     order_id = request.session["order_id"]
@@ -80,14 +71,6 @@ async def order_history(
 ):
     """
     Render user's order history (requires login).
-    
-    Hint:
-    1. Fetch all orders by user: orders = await get_orders_by_buyer(user_id)
-    2. Return templates.TemplateResponse(..., {
-        "request": request,
-        "orders": orders,
-        "user_id": user_id
-    })
     """
     # Fetch all orders made by the current user
     orders = await get_orders_by_buyer(user_id)
@@ -149,24 +132,6 @@ async def payment_cancel(
 async def stripe_webhook(request: Request):
     """
     Handle Stripe webhook events (payment_intent.succeeded).
-    
-    Hint:
-    1. Get payload and signature: 
-       payload = await request.body()
-       sig_header = request.headers.get("stripe-signature")
-    
-    2. Construct event:
-       try:
-           event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
-       except ValueError/SignatureVerificationError:
-           raise HTTPException(400, "Invalid payload/signature")
-    
-    3. If event["type"] == "payment_intent.succeeded":
-       - Extract payment_intent and order_id from metadata
-       - Call: await process_successful_payment(order_id, stripe_payment_id)
-       - Log success or error
-    
-    4. Return {"status": "success"}
     """
     # Get payload and signature
     payload = await request.body()

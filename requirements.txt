@@ -16,3 +16,7 @@ argon2_cffi
 # Plus
 stripe
 xhtml2pdf
+
+reportlab
+qrcode
+pillow

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Ingresso - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="mb-2">🎫 Detalhes do Ingresso</h1>
+            <p class="text-muted">Ingresso #{{ ticket["id"] }}</p>
+        </div>
+
+        <!-- Main Ticket Card -->
+        <div class="card shadow-lg mb-4 ticket-display">
+            <!-- Ticket Header -->
+            <div class="card-header bg-gradient text-white py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-1">🎫 INGRESSO VÁLIDO</h4>
+                        <p class="mb-0 small">ID: #{{ ticket["id"] }}</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if ticket["status"] == "valid" %}
+                            <span class="badge bg-success" style="font-size: 14px;">VÁLIDO ✅</span>
+                        {% elif ticket["status"] == "used" %}
+                            <span class="badge bg-secondary" style="font-size: 14px;">UTILIZADO ✓</span>
+                        {% elif ticket["status"] == "cancelled" %}
+                            <span class="badge bg-danger" style="font-size: 14px;">CANCELADO ✗</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket Body -->
+            <div class="card-body py-5">
+                <!-- Holder Section -->
+                <div class="mb-5 pb-4 border-bottom">
+                    <h6 class="mb-3 text-uppercase text-muted small fw-bold">👤 Dados do Titular</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1 small text-muted">Nome Completo</p>
+                            <p class="mb-0 fw-bold fs-6">{{ ticket["holder_name"] }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 small text-muted">CPF</p>
+                            <p class="mb-0 fw-bold fs-6 text-monospace">{{ ticket["holder_cpf"] }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Holder Data Button -->
+                <div class="alert alert-warning mb-4">
+                    <h6 class="mb-3">✏️ Alterar Dados do Titular</h6>
+                    <p class="mb-3 small">
+                        Se você precisa corrigir o nome ou CPF do titular, clique no botão abaixo.
+                    </p>
+                    <a href="/tickets/collect/{{ order['id'] }}" class="btn btn-warning btn-lg fw-bold w-100">
+                        Alterar Dados dos Titulares 📝
+                    </a>
+                </div>
+
+                <!-- Order Info Section -->
+                <div class="mb-5 pb-4 border-bottom">
+                    <h6 class="mb-3 text-uppercase text-muted small fw-bold">📦 Informações do Pedido</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Pedido #</p>
+                            <p class="mb-0 fw-bold">#{{ order["id"] }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Evento ID</p>
+                            <p class="mb-0 fw-bold">#{{ order["event_id"] }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Tipo de Ingresso</p>
+                            <p class="mb-0 fw-bold">
+                                {% if ticket["ticket_type_id"] == 1 %}
+                                    Standard
+                                {% elif ticket["ticket_type_id"] == 2 %}
+                                    VIP
+                                {% elif ticket["ticket_type_id"] == 3 %}
+                                    Early Bird
+                                {% elif ticket["ticket_type_id"] == 4 %}
+                                    Grupo
+                                {% else %}
+                                    Tipo #{{ ticket["ticket_type_id"] }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Info Section -->
+                <div class="mb-5 pb-4 border-bottom">
+                    <h6 class="mb-3 text-uppercase text-muted small fw-bold">💳 Informações de Pagamento</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 small text-muted">Valor Pago</p>
+                            <p class="mb-0 fw-bold fs-5 text-primary">R$ {{ "%.2f" | format(ticket["price_paid"] / 100) }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 small text-muted">Status do Pagamento</p>
+                            <p class="mb-0">
+                                {% if order["payment_status"] == "paid" %}
+                                    <span class="badge bg-success">Pago ✅</span>
+                                {% elif order["payment_status"] == "pending" %}
+                                    <span class="badge bg-warning">Pendente ⏳</span>
+                                {% elif order["payment_status"] == "failed" %}
+                                    <span class="badge bg-danger">Falhou ❌</span>
+                                {% elif order["payment_status"] == "refunded" %}
+                                    <span class="badge bg-secondary">Reembolsado 🔄</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Section -->
+                <div>
+                    <h6 class="mb-3 text-uppercase text-muted small fw-bold">📅 Timeline</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 small text-muted">Data de Compra</p>
+                            <p class="mb-0 small">
+                                {{ ticket["created_at"].strftime('%d de %B de %Y às %H:%M') if ticket["created_at"] else 'N/A' }}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 small text-muted">Status</p>
+                            <p class="mb-0 small">
+                                {% if ticket["status"] == "valid" %}
+                                    Válido para entrada
+                                {% elif ticket["status"] == "used" %}
+                                    Utilizado em {{ order["completed_at"].strftime('%d/%m/%Y') if order["completed_at"] else 'data não registrada' }}
+                                {% elif ticket["status"] == "cancelled" %}
+                                    Cancelado
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download PDF Section -->
+        <div class="alert alert-success mb-4">
+            <h6 class="mb-3">📄 Seu Ingresso em PDF</h6>
+            <p class="mb-3 small">
+                Clique no botão abaixo para fazer download do seu ingresso em PDF. Ele contém um código QR para fácil validação na entrada do evento.
+            </p>
+            <div class="d-grid gap-2">
+                <a href="/tickets/{{ ticket['id'] }}/pdf" class="btn btn-success btn-lg fw-bold" download="ticket_{{ ticket['id'] }}.pdf">
+                    📥 Fazer Download do Ingresso (PDF)
+                </a>
+            </div>
+        </div>
+
+        <!-- Important Info -->
+        <div class="alert alert-info">
+            <h6 class="mb-2">ℹ️ Informações Importantes</h6>
+            <ul class="mb-0 small">
+                <li>Guarde este ingresso com segurança até o evento</li>
+                <li>Você pode fazer download do PDF quantas vezes quiser</li>
+                <li>Apresente o ingresso (impresso ou no celular) na entrada do evento</li>
+                <li>Não é permitido compartilhar ou revender ingressos</li>
+            </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <a href="/tickets" class="btn btn-primary btn-lg">
+                ← Voltar aos Meus Ingressos
+            </a>
+            <a href="/events" class="btn btn-outline-primary">
+                Explorar Mais Eventos
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+                Voltar à Página Inicial
+            </a>
+        </div>
+
+        <!-- QR Code Info (Optional visual) -->
+        <div class="alert alert-light mt-5 text-center p-4 border">
+            <p class="text-muted small mb-3">
+                <strong>💡 Dica:</strong> Seu ingresso inclui um código QR único que será validado na entrada.
+            </p>
+            <div style="font-size: 80px; margin: 20px 0;">📱</div>
+            <p class="text-muted small">
+                Mantenha a tela ligada ou leve uma cópia impressa para melhor experiência
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- CSS for ticket display styling -->
+<style>
+    .ticket-display {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+    }
+
+    .bg-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .ticket-display .card-header {
+        border-bottom: 3px solid #667eea;
+    }
+
+    .text-monospace {
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+    }
+</style>
+{% endblock %}

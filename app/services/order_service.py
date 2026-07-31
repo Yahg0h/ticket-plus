@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import text
 
 from app.database import engine
+from app.services.ticket_service import create_ticket
 
 # ==========================================
 # ORDER DATABASE OPERATIONS
@@ -277,41 +278,55 @@ async def process_successful_payment(order_id: int, stripe_payment_id: str) -> b
     """
     # Fetch the order information
     order = await get_order_by_id(order_id)
-
-    # Update payment_status to paid
-    await update_order_payment_status(order_id, 'paid', stripe_payment_id)
-
-    # Update order_status to confirmed
-    await update_order_status(order_id, 'confirmed')
-
-    # Connect to database
+    
+    if not order:
+        raise ValueError("Order not found.")
+    
     async with engine.connect() as conn:
+        # Update payment_status to paid
+        await update_order_payment_status(order_id, 'paid', stripe_payment_id)
+
+        # Update order_status to confirmed
+        await update_order_status(order_id, 'confirmed')
+
+        # Calculate price per ticket
+        price_per_ticket = order["total_amount"] // order["quantity"]
+
+        # Create tickets for this order
+        for i in range(order["quantity"]):
+            await create_ticket(
+                order_id=order_id,
+                ticket_type_id=order["ticket_type_id"],
+                holder_name="Placeholder",  # To be filled later during collection in routes/tickets
+                holder_cpf="000.000.000-00",  # To be filled later during collection in routes/tickets
+                price_paid=price_per_ticket
+            )
+
         # Update quantity_sold in ticket_types
         qty_query = """
-        UPDATE ticket_types tt
-        JOIN (
-            SELECT ticket_type_id, COUNT(*) as qty
-            FROM tickets
-            WHERE order_id = :order_id
-            GROUP BY ticket_type_id
-            ) t_count ON tt.id = t_count.ticket_type_id
-            SET tt.quantity_sold = tt.quantity_sold + t_count.qty
+        UPDATE ticket_types
+        SET quantity_sold = quantity_sold + :quantity
+        WHERE id = :ticket_type_id
         """
-        await conn.execute(text(qty_query), {"order_id": order_id})
+        await conn.execute(text(qty_query), {
+            "quantity": order["quantity"],
+            "ticket_type_id": order["ticket_type_id"]
+        })
         await conn.commit()
 
         # Update available_tickets in events
         event_query = """
         UPDATE events
-        SET available_tickets = available_tickets - (
-            SELECT COUNT(*) FROM tickets WHERE order_id = :order_id
-        )
+        SET available_tickets = available_tickets - :quantity
         WHERE id = :event_id
         """
-        await conn.execute(text(event_query), {"order_id": order_id, "event_id": order["event_id"]})
+        await conn.execute(text(event_query), {
+            "quantity": order["quantity"],
+            "event_id": order["event_id"]
+        })
         await conn.commit()
 
-        # Return True
+        # Return True if successful
         return True    
 
 
