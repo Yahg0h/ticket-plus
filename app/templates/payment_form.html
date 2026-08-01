@@ -47,20 +47,6 @@
                         <div id="card-errors" class="text-danger mt-2 small" role="alert"></div>
                     </div>
 
-                    <!-- Email -->
-                    <div class="mb-4">
-                        <label for="email" class="form-label fw-bold">Email</label>
-                        <input 
-                            type="email" 
-                            class="form-control" 
-                            id="email" 
-                            name="email"
-                            placeholder="seu.email@example.com"
-                            required
-                        >
-                        <small class="text-muted">Seus ingressos serão enviados para este email</small>
-                    </div>
-
                     <!-- Hidden field for client secret -->
                     <input type="hidden" id="client_secret" value="{{ client_secret }}">
                     <input type="hidden" id="order_id" value="{{ order_id }}">
@@ -147,7 +133,7 @@
             payment_method: {
                 card: cardElement,
                 billing_details: {
-                    email: document.getElementById('email').value
+                    // email: unused
                 }
             }
         });
