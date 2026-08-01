@@ -1,7 +1,16 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import text
 
@@ -27,6 +36,7 @@ from app.services.event_service import (
     get_ticket_types_by_event,
     update_event,
 )
+from app.services.image_service import delete_banner_image, upload_banner_image
 
 # Configure router
 router = APIRouter(prefix="/events", tags=["events"])
@@ -122,18 +132,33 @@ async def get_create_event(
 async def post_create_event(
     request: Request,
     user_id: int = Depends(verify_user_token),
-    event_data: Annotated[EventCreate, Form()] = None
+    event_data: Annotated[EventCreate, Form()] = None,
 ):
     """
     Create a new event (requires login).
     """
-    # Add event to the database; if a error happens, return 400
+    if not event_data:
+        raise HTTPException(status_code=400, detail="Invalid form data. Please fill all required fields.")
+
+    # Extract banner file from form manually
+    form_data = await request.form()
+    banner_file = form_data.get("banner_file")
+
+    # Handle banner upload
+    banner_url = None
+    if banner_file and banner_file.filename:
+        try:
+            banner_url = await upload_banner_image(banner_file)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    # Add event to the database
     try:
         event_id = await create_event(
             organizer_id=user_id,
             title=event_data.title,
             description=event_data.description,
-            banner_url=event_data.banner_url,
+            banner_url=banner_url,
             category=event_data.category,
             state=event_data.state,
             city=event_data.city,
@@ -142,30 +167,25 @@ async def post_create_event(
             start_date=event_data.start_date,
             end_date=event_data.end_date
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+    except ValueError:
         raise HTTPException(status_code=400, detail="An error occurred during the database event creation operation. Please check the entered data and try again, or try again later.")
 
     # ==== AUDIT LOGS ENTRY ====
-    # Organizer new event info into a dict
     new_values_dict = {
         "title": event_data.title,
         "description": event_data.description,
-        "banner_url": event_data.banner_url,
+        "banner_url": banner_url,
         "category": event_data.category,
         "state": event_data.state,
         "city": event_data.city,
         "address": event_data.address,
         "total_capacity": event_data.total_capacity,
-        "start_date": event_data.start_date.isoformat(),
-        "end_date": event_data.end_date.isoformat()
+        "start_date": event_data.start_date.isoformat() if event_data.start_date else None,
+        "end_date": event_data.end_date.isoformat() if event_data.end_date else None
     }
 
-    # Convert it from a dict to a JSON string
-    _ , new_values_json = prepare_old_new_values(None, new_values_dict)
+    _, new_values_json = prepare_old_new_values(None, new_values_dict)
 
-    # Log action
     try:
         await log_action(
             action="create",
@@ -268,6 +288,10 @@ async def post_edit_event(
     """
     Update event information.
     """
+    # Check if event_data is None
+    if not event_data:
+        raise HTTPException(status_code=400, detail="Invalid form data.")
+
     # Get current event data first (for audit logs old values)
     old_event_data = await get_event_by_id(event_id)
 
@@ -278,7 +302,27 @@ async def post_edit_event(
     # Check if the current user is the event organizer
     if old_event_data['organizer_id'] != user_id:
         raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view this page.")
-    
+
+    # Extract banner file from form manually
+    form_data = await request.form()
+    banner_file = form_data.get("banner_file")
+
+    # Handle banner upload (delete old, upload new)
+    banner_url = None
+    if banner_file and banner_file.filename:
+        try:
+            # Delete old banner if exists
+            if old_event_data["banner_url"]:
+                try:
+                    await delete_banner_image(old_event_data["banner_url"])
+                except ValueError:
+                    pass
+            
+            # Upload new banner
+            banner_url = await upload_banner_image(banner_file)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
     # Build dynamic dict that only store info of the fields that were chosen to be updated
     update_params = {
         "event_id": event_id,
@@ -289,13 +333,11 @@ async def post_edit_event(
         update_params["title"] = event_data.title
     if event_data.description:
         update_params["description"] = event_data.description
-    if event_data.banner_url:
-        update_params["banner_url"] = event_data.banner_url
     if event_data.category:
         update_params["category"] = event_data.category
-    if event_data.state and event_data.state.strip():
+    if event_data.state:
         update_params["state"] = event_data.state
-    if event_data.city and event_data.city.strip():
+    if event_data.city:
         update_params["city"] = event_data.city
     if event_data.address:
         update_params["address"] = event_data.address
@@ -305,7 +347,9 @@ async def post_edit_event(
         update_params["start_date"] = event_data.start_date
     if event_data.end_date:
         update_params["end_date"] = event_data.end_date
-    
+    if banner_url:
+        update_params["banner_url"] = banner_url
+
     # Update event info
     try:
         await update_event(**update_params)
@@ -313,7 +357,7 @@ async def post_edit_event(
         raise HTTPException(status_code=400, detail=str(e))
 
     # ==== AUDIT LOGS ENTRY ====
-    # Create a new dict to store old values
+    # Convert datetimes to ISO string before passing for audit logs
     old_event_data_audit = {
         "title": old_event_data["title"],
         "description": old_event_data["description"],
@@ -330,13 +374,11 @@ async def post_edit_event(
     # Create a new dict to store new values
     new_dict = {}
 
-    # Dyanmic addition, only adds to the log the fields that were updated
+    # Dynamic addition, only adds to the log the fields that were updated
     if event_data.title:
         new_dict["title"] = event_data.title
     if event_data.description:
         new_dict["description"] = event_data.description
-    if event_data.banner_url:
-        new_dict["banner_url"] = event_data.banner_url
     if event_data.category:
         new_dict["category"] = event_data.category
     if event_data.state:
@@ -348,9 +390,11 @@ async def post_edit_event(
     if event_data.total_capacity:
         new_dict["total_capacity"] = event_data.total_capacity
     if event_data.start_date:
-        new_dict["start_date"] = event_data.start_date.isoformat()
+        new_dict["start_date"] = event_data.start_date.isoformat() if event_data.start_date else None
     if event_data.end_date:
-        new_dict["end_date"] = event_data.end_date.isoformat()
+        new_dict["end_date"] = event_data.end_date.isoformat() if event_data.end_date else None
+    if banner_url:
+        new_dict["banner_url"] = banner_url
 
     # Convert from dict to JSON string
     old_values_json, new_values_json = prepare_old_new_values(old_event_data_audit, new_dict)
@@ -370,6 +414,7 @@ async def post_edit_event(
     except ValueError:
         pass
     # ==== END OF AUDIT LOGS ENTRY ====
+
     # Flash message
     request.session["flash"] = "Event updated successfully."
 

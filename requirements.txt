@@ -20,3 +20,5 @@ xhtml2pdf
 reportlab
 qrcode
 pillow
+
+aiofiles

@@ -13,7 +13,7 @@
             </div>
 
             <!-- Form -->
-            <form method="POST" action="/events/{{ event.id }}/edit" class="needs-validation" novalidate>
+            <form method="POST" action="/events/{{ event.id }}/edit" class="needs-validation" novalidate enctype="multipart/form-data">
                 
                 <!-- Título -->
                 <div class="mb-3">
@@ -47,15 +47,13 @@
                 <div class="mb-3">
                     <label for="banner_url" class="form-label">URL da Imagem (Banner)</label>
                     <input 
-                        type="url" 
+                        type="file" 
                         class="form-control" 
-                        id="banner_url" 
-                        name="banner_url" 
-                        value="{{ event.banner_url or '' }}"
-                        maxlength="255"
-                        placeholder="https://exemplo.com/imagem.jpg"
+                        id="banner_file" 
+                        name="banner_file" 
+                        accept=".jpg,.jpeg,.png,.webp"
                     >
-                    <small class="form-text text-muted">Link para a imagem de capa do evento</small>
+                    <small class="form-text text-muted">Máximo 5MB. Formatos: JPG, PNG, WebP</small>
                 </div>
 
                 <!-- Categoria -->

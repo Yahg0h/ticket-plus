@@ -8,3 +8,5 @@ venv/
 *.egg-info/
 dist/
 build/
+app/static/images/events/*
+!app/static/images/events/.gitkeep

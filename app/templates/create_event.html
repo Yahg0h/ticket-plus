@@ -39,13 +39,13 @@
                     <div class="mb-3">
                         <label for="banner_url" class="form-label">URL da Imagem do Evento</label>
                         <input 
-                            type="url" 
+                            type="file" 
                             class="form-control" 
-                            id="banner_url" 
-                            name="banner_url" 
-                            placeholder="https://exemplo.com/imagem.jpg"
+                            id="banner_file" 
+                            name="banner_file" 
+                            accept=".jpg,.jpeg,.png,.webp"
                         >
-                        <small class="form-text text-muted">Deixe em branco para usar imagem padrão</small>
+                        <small class="form-text text-muted">Máximo 5MB. Formatos: JPG, PNG, WebP</small>
                     </div>
 
                     <!-- Categoria -->
