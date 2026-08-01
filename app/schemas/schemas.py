@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -13,6 +14,9 @@ CPF_REGEX = r"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$"
 # Accepts formated Brazilian phone numbers (with or without DDD, with or without +55)
 # Ex: (11) 99999-9999, 11999999999, +5511999999999
 PHONE_REGEX = r"^(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9?\d{4})-?\d{4}$"
+
+# Accepts formatted email addresses (e.g., user@domain.com)
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 # Accepts IPv4 and IPv6
 IP_REGEX = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
@@ -98,7 +102,7 @@ class UserCreate(UserBase):
 
 class UserLogin(BaseModel):
     """Schema to authenticate a user during login"""
-    email: EmailStr | None = None
+    email: str | None
     phone_number: str | None = Field(default=None, pattern=PHONE_REGEX, max_length=20)
     password: str
 
@@ -106,8 +110,8 @@ class UserLogin(BaseModel):
     def validate_contact(self) -> "UserLogin":
         if not self.email and not self.phone_number:
             raise ValueError("Must provide either an email or a phone number to log in.")
-        return self
 
+        return self
 
 class UserUpdate(BaseModel):
     """Schema for updating user data (PUT)"""

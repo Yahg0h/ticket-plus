@@ -1,3 +1,4 @@
+import re
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request
@@ -6,7 +7,7 @@ from sqlalchemy import text
 
 from app.config import templates
 from app.database import engine
-from app.schemas.schemas import UserCreate, UserLogin
+from app.schemas.schemas import EMAIL_REGEX, PHONE_REGEX, UserCreate, UserLogin
 from app.services.audit_service import (
     get_ip_from_request,
     get_user_agent_from_request,
@@ -124,6 +125,20 @@ async def post_login(
     """
     Authenticate a user and set JWT cookie.
     """
+    # Check if the login method is email or phone_number
+    # (phone_number also comes in name=email, that's why the check is necessary)
+    user_login_method = user.email
+
+    # If it is a email, add None to phone_number; if it is a phone number, add None to email; Else, return 400
+    if re.match(EMAIL_REGEX,user_login_method):
+        user.email = user_login_method
+        user.phone_number = None
+    elif re.match(PHONE_REGEX, user_login_method):
+        user.email = None
+        user.phone_number = user_login_method
+    else:
+        raise HTTPException(status_code=400, detail="Email or phone number isn't valid. Please try again.")
+
     # Authenticate the user
     auth_user = await authenticate_user(user.email, user.phone_number, user.password)
 
