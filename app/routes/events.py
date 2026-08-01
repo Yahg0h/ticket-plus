@@ -7,7 +7,7 @@ from sqlalchemy import text
 
 from app.config import templates
 from app.database import engine
-from app.schemas.schemas import EventCreate, TicketTypeCreate
+from app.schemas.schemas import EventCreate, EventUpdate, TicketTypeCreate
 from app.services.audit_service import (
     get_ip_from_request,
     get_user_agent_from_request,
@@ -18,12 +18,14 @@ from app.services.auth_service import get_current_user_optional, verify_user_tok
 from app.services.event_service import (
     create_event,
     create_ticket_type,
+    delete_event,
     delete_ticket_type,
     get_all_events,
     get_event_by_id,
     get_events_by_organizer,
     get_ticket_type_by_id,
     get_ticket_types_by_event,
+    update_event,
 )
 
 # Configure router
@@ -140,8 +142,8 @@ async def post_create_event(
             start_date=event_data.start_date,
             end_date=event_data.end_date
         )
-    except ValueError:
-        raise HTTPException(status_code=400, detail="An error occurred during the database event creation operation. Please check the entered data and try again, or try again later.")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         raise HTTPException(status_code=400, detail="An error occurred during the database event creation operation. Please check the entered data and try again, or try again later.")
 
@@ -156,8 +158,8 @@ async def post_create_event(
         "city": event_data.city,
         "address": event_data.address,
         "total_capacity": event_data.total_capacity,
-        "start_date": event_data.start_date,
-        "end_date": event_data.end_date
+        "start_date": event_data.start_date.isoformat(),
+        "end_date": event_data.end_date.isoformat()
     }
 
     # Convert it from a dict to a JSON string
@@ -221,6 +223,229 @@ async def get_event_detail(
         }
     )
     
+# ==========================================
+# ORGANIZER EVENT MANAGEMENT (EDIT / DELETE)
+# ==========================================
+
+@router.get("/{event_id}/edit", response_class=HTMLResponse)
+async def get_edit_event(
+    request: Request,
+    event_id: int,
+    user_id: int = Depends(verify_user_token)
+):
+    """
+    Render event edit form.
+    """
+    # Fetch event
+    event = await get_event_by_id(event_id)
+
+    # Check if exists
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+    
+    # Check if user is event organizer, else return 403
+    if event["organizer_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view this page or perform an action.")
+    
+    # Render template with event data
+    return templates.TemplateResponse(
+        request,
+        "edit_event.html",
+        {
+            "request": request,
+            "event": event,
+            "user_id": user_id
+        }
+    )
+
+@router.post("/{event_id}/edit", response_class=HTMLResponse)
+async def post_edit_event(
+    request: Request,
+    event_id: int,
+    user_id: int = Depends(verify_user_token),
+    event_data: Annotated[EventUpdate, Form()] = None
+):
+    """
+    Update event information.
+    """
+    # Get current event data first (for audit logs old values)
+    old_event_data = await get_event_by_id(event_id)
+
+    # Check if the events exists
+    if not old_event_data:
+        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+
+    # Check if the current user is the event organizer
+    if old_event_data['organizer_id'] != user_id:
+        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view this page.")
+    
+    # Build dynamic dict that only store info of the fields that were chosen to be updated
+    update_params = {
+        "event_id": event_id,
+        "organizer_id": user_id
+    }
+
+    if event_data.title:
+        update_params["title"] = event_data.title
+    if event_data.description:
+        update_params["description"] = event_data.description
+    if event_data.banner_url:
+        update_params["banner_url"] = event_data.banner_url
+    if event_data.category:
+        update_params["category"] = event_data.category
+    if event_data.state and event_data.state.strip():
+        update_params["state"] = event_data.state
+    if event_data.city and event_data.city.strip():
+        update_params["city"] = event_data.city
+    if event_data.address:
+        update_params["address"] = event_data.address
+    if event_data.total_capacity:
+        update_params["total_capacity"] = event_data.total_capacity
+    if event_data.start_date:
+        update_params["start_date"] = event_data.start_date
+    if event_data.end_date:
+        update_params["end_date"] = event_data.end_date
+    
+    # Update event info
+    try:
+        await update_event(**update_params)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # ==== AUDIT LOGS ENTRY ====
+    # Create a new dict to store old values
+    old_event_data_audit = {
+        "title": old_event_data["title"],
+        "description": old_event_data["description"],
+        "banner_url": old_event_data["banner_url"],
+        "category": old_event_data["category"],
+        "state": old_event_data["state"],
+        "city": old_event_data["city"],
+        "address": old_event_data["address"],
+        "total_capacity": old_event_data["total_capacity"],
+        "start_date": old_event_data["start_date"].isoformat() if old_event_data["start_date"] else None,
+        "end_date": old_event_data["end_date"].isoformat() if old_event_data["end_date"] else None
+    }
+
+    # Create a new dict to store new values
+    new_dict = {}
+
+    # Dyanmic addition, only adds to the log the fields that were updated
+    if event_data.title:
+        new_dict["title"] = event_data.title
+    if event_data.description:
+        new_dict["description"] = event_data.description
+    if event_data.banner_url:
+        new_dict["banner_url"] = event_data.banner_url
+    if event_data.category:
+        new_dict["category"] = event_data.category
+    if event_data.state:
+        new_dict["state"] = event_data.state
+    if event_data.city:
+        new_dict["city"] = event_data.city
+    if event_data.address:
+        new_dict["address"] = event_data.address
+    if event_data.total_capacity:
+        new_dict["total_capacity"] = event_data.total_capacity
+    if event_data.start_date:
+        new_dict["start_date"] = event_data.start_date.isoformat()
+    if event_data.end_date:
+        new_dict["end_date"] = event_data.end_date.isoformat()
+
+    # Convert from dict to JSON string
+    old_values_json, new_values_json = prepare_old_new_values(old_event_data_audit, new_dict)
+
+    # Log action
+    try:
+        await log_action(
+            action='update',
+            auditable_type='event',
+            auditable_id=event_id,
+            user_id=user_id,
+            old_values=old_values_json,
+            new_values=new_values_json,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
+    # Flash message
+    request.session["flash"] = "Event updated successfully."
+
+    # Redirect back to event details page
+    return RedirectResponse(url=f"/events/{event_id}", status_code=303)
+
+@router.post("/{event_id}/delete", response_class=HTMLResponse)
+async def delete_event_route(
+    request: Request,
+    event_id: int,
+    user_id: int = Depends(verify_user_token)
+):
+    """Delete event."""
+    # Get event first (for audit logs)
+    event_data = await get_event_by_id(event_id)
+
+    # Check if event exists, else 404
+    if not event_data:
+        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+
+    # Check if the current user is the event organizer
+    if event_data["organizer_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to perform this action.")
+    
+    # Delete the event
+    try:
+        is_deleted = await delete_event(event_id, user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # If the event couldn't be deleted, return error message (fallback in case except doesn't do it)
+    if not is_deleted:
+        raise HTTPException(status_code=400, detail="An error occurred while deleting your event from the database. Please try again later.")
+
+    # ==== AUDIT LOGS ENTRY ====
+    # Fix datetime dates for start and end date to work well on the audit log
+    start_date_iso = event_data["start_date"].isoformat()
+    end_date_iso = event_data["end_date"].isoformat()
+    
+    # Add those all old values to a new dict
+    old_dict = {
+        "title": event_data["title"],
+        "description": event_data["description"],
+        "banner_url": event_data["banner_url"],
+        "category": event_data["category"],
+        "state": event_data["state"],
+        "city": event_data["city"],
+        "address": event_data["address"],
+        "total_capacity": event_data["total_capacity"],
+        "start_date": start_date_iso,
+        "end_date": end_date_iso
+    }
+
+    # Convert current event info from dict to JSON string
+    old_values_json, _ = prepare_old_new_values(old_dict, None)
+
+    # Log action
+    try:
+        await log_action(
+            action='delete',
+            auditable_type='event',
+            auditable_id=event_id,
+            user_id=user_id,
+            old_values=old_values_json,
+            new_values=None,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
+    # Flash + redirect to /events/my-events
+    request.session["flash"] = "Event deleted successfully."
+
+    return RedirectResponse(url="/events/my-events", status_code=303)
+
 
 # ==========================================
 # TICKET TYPE (LOTES/Ticket Batches) ROUTES

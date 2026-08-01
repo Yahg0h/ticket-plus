@@ -46,10 +46,10 @@ async def create_event(
     # Check if the start date is from a day before today
     now = datetime.now(timezone.utc)
 
-    # Convert start_date and end_date to aware so comparisons between offset-aware to offset-aware can occour
-    if not start_date.tzinfo:
+    # Convert start_date and end_date to aware if they're datetime objects
+    if isinstance(start_date, datetime) and not start_date.tzinfo:
         start_date = start_date.replace(tzinfo=timezone.utc)
-    if not end_date.tzinfo:
+    if isinstance(end_date, datetime) and not end_date.tzinfo:
         end_date = end_date.replace(tzinfo=timezone.utc)
 
     if start_date < now:
@@ -233,9 +233,14 @@ async def update_event(
             updates.append("category = :category")
             params["category"] = category
 
-        if state or city:
+        if (state is not None and state) or (city is not None and city):
             # Verify whether the request for permission to change location prior to the 30-day deadline has been fulfilled.
             event_start = existing_event["start_date"]
+            
+            # Make event_start timezone-aware if it's naive
+            if isinstance(event_start, datetime) and not event_start.tzinfo:
+                event_start = event_start.replace(tzinfo=timezone.utc)
+            
             days_until_start = (event_start - datetime.now(timezone.utc)).days
 
             # If it is, return ValueError
@@ -256,7 +261,7 @@ async def update_event(
         if total_capacity:
             # Check if the new total_capacity is not less than the number of tickets already sold (prevent scams).
             sold_query = await conn.execute(text("SELECT COALESCE(SUM(quantity_sold), 0) as total_sold FROM ticket_types WHERE event_id = :event_id"), 
-                                            {"event_id = :event_id"})
+                                            {"event_id": event_id})
             total_sold = sold_query.scalar()
 
             # If it is, return ValueError
@@ -267,17 +272,16 @@ async def update_event(
                 updates.append("total_capacity = :total_capacity")
                 params["total_capacity"] = total_capacity
 
-        # Before verifying, convert start_date and end_date to aware so comparisons between offset-aware to offset-aware can occour
-        if not start_date.tzinfo:
+        # Convert start_date and end_date to aware if they're datetime objects and are provided
+        if isinstance(start_date, datetime) and not start_date.tzinfo:
             start_date = start_date.replace(tzinfo=timezone.utc)
-        if not end_date.tzinfo:
+        if isinstance(end_date, datetime) and not end_date.tzinfo:
             end_date = end_date.replace(tzinfo=timezone.utc)
 
         if start_date:
             # Check if the start date is changed to before today
             now = datetime.now(timezone.utc)
             
-            # Se start_date já é datetime, compare direto
             if start_date < now:
                 raise ValueError("It is not possible to change the start date of an event that has already started.")
             else:
@@ -288,6 +292,10 @@ async def update_event(
         if end_date:
             # Check if the event end_date is early than the event's current start_date
             event_end = existing_event["end_date"]
+            
+            # Make event_end timezone-aware if it's naive
+            if isinstance(event_end, datetime) and not event_end.tzinfo:
+                event_end = event_end.replace(tzinfo=timezone.utc)
             
             if end_date < event_end:
                 raise ValueError("New event end date cannot be earlier than the original start date.")
