@@ -3,9 +3,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import text
 
 from app.config import templates
+from app.database import engine
 from app.schemas.schemas import EventCreate, TicketTypeCreate
+from app.services.audit_service import (
+    get_ip_from_request,
+    get_user_agent_from_request,
+    log_action,
+    prepare_old_new_values,
+)
 from app.services.auth_service import get_current_user_optional, verify_user_token
 from app.services.event_service import (
     create_event,
@@ -137,6 +145,40 @@ async def post_create_event(
     except Exception:
         raise HTTPException(status_code=400, detail="An error occurred during the database event creation operation. Please check the entered data and try again, or try again later.")
 
+    # ==== AUDIT LOGS ENTRY ====
+    # Organizer new event info into a dict
+    new_values_dict = {
+        "title": event_data.title,
+        "description": event_data.description,
+        "banner_url": event_data.banner_url,
+        "category": event_data.category,
+        "state": event_data.state,
+        "city": event_data.city,
+        "address": event_data.address,
+        "total_capacity": event_data.total_capacity,
+        "start_date": event_data.start_date,
+        "end_date": event_data.end_date
+    }
+
+    # Convert it from a dict to a JSON string
+    _ , new_values_json = prepare_old_new_values(None, new_values_dict)
+
+    # Log action
+    try:
+        await log_action(
+            action="create",
+            auditable_type="event",
+            auditable_id=event_id,
+            user_id=user_id,
+            old_values=None,
+            new_values=new_values_json,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
+
     # Flash message
     request.session["flash"] = "Event created successfully!"
 
@@ -251,6 +293,38 @@ async def post_add_ticket_type(
     except ValueError:
         raise HTTPException(status_code=400, detail="An error occurred during the database event ticket type creation operation. Please check the entered data and try again, or try again later.")
 
+    # ==== AUDIT LOGS ENTRY ====
+    # Fetch id of the recently created ticket type
+    async with engine.connect() as conn:
+        query = await conn.execute(text("SELECT id FROM ticket_types WHERE id = LAST_INSERT_ID()"))
+        ticket_type_id = query.scalar()
+
+    # Fetch ticket type data info
+    new_values_dict = {
+        "type": ticket_data.type,
+        "price": ticket_data.price,
+        "quantity_available": ticket_data.quantity_available
+    }
+
+    # Convert from dict to JSON string
+    _, new_values_json = prepare_old_new_values(None, new_values_dict)
+
+    # Log action
+    try:
+        await log_action(
+            action="create",
+            auditable_type="ticket_type",
+            auditable_id=ticket_type_id,
+            user_id=user_id,
+            old_values=None,
+            new_values=new_values_json,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
+
     # Flash message
     request.session["flash"] = "Lote/Ticket Batch successfully added!"
 
@@ -284,6 +358,37 @@ async def delete_ticket_type_route(
     # If ticket type doesn't exist, return 404
     if not ticket_type:
         raise HTTPException(status_code=404, detail="Ticket type not found or doesn't exist.")
+
+    # ==== AUDIT LOGS ENTRY ====
+    # Fetch all ticket type data
+    old_value_dict = {
+        "id": ticket_type["id"],
+        "event_id": ticket_type["event_id"],
+        "type": ticket_type["type"],
+        "price": ticket_type["price"],
+        "quantity_available": ticket_type["quantity_available"],
+        "quantity_sold": ticket_type["quantity_sold"],
+        "created_at": ticket_type["created_at"]
+    }
+
+    # Convert them from dict to JSON string
+    old_values_json, _ = prepare_old_new_values(old_value_dict, None)
+
+    # Log action
+    try:
+        await log_action(
+            action="delete",
+            auditable_type="ticket_type",
+            auditable_id=ticket_type_id,
+            user_id=user_id,
+            old_values=old_values_json,
+            new_values=None,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
 
     # Delete ticket type, if it has already sold any tickets under it, return 400
     try:

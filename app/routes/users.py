@@ -5,6 +5,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import templates
 from app.schemas.schemas import UserUpdate
+from app.services.audit_service import (
+    get_ip_from_request,
+    get_user_agent_from_request,
+    log_action,
+    prepare_old_new_values,
+)
 from app.services.auth_service import (
     get_user_by_id,
     verify_user_token,
@@ -110,6 +116,50 @@ async def post_edit_profile(
     except ValueError:
         raise HTTPException(status_code=409, detail="New email or phone number is already registered.")
 
+
+    # ==== AUDIT LOGS ENTRY ====
+    # Fetch the old data of the user before the update
+    old_dict = {
+        "name": current_user["name"],
+        "email": current_user["email"],
+        "phone_number": current_user["phone_number"],
+        "state": current_user["state"],
+        "city": current_user["city"],
+    }
+
+    new_dict = {}
+
+    # Add to the new data info dict only the fields that were updated
+    if user_data.name:
+        new_dict["name"] = user_data.name
+    if user_data.email:
+        new_dict["email"] = user_data.email
+    if user_data.phone_number:
+        new_dict["phone_number"] = user_data.phone_number
+    if user_data.state:
+        new_dict["state"] = user_data.state
+    if user_data.city:
+        new_dict["city"] = user_data.city
+
+    # Convert the data from dict to JSON string
+    old_values_json, new_values_json = prepare_old_new_values(old_dict, new_dict)
+
+    try:
+        # Log action
+        await log_action(
+            action='update',
+            auditable_type='user',
+            auditable_id=user_id,
+            user_id=user_id,
+            old_values=old_values_json,
+            new_values=new_values_json,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY
+
     # Flash message
     request.session["flash"] = "Account profile information successfully updated."
 
@@ -155,6 +205,38 @@ async def delete_account(
     """
     Delete user account (requires login).
     """
+    # ==== AUDIT LOGS ENTRY ====
+    # Get current user info
+    current_user = await get_user_by_id(user_id)
+
+    # Store current user data before deletion
+    old_dict = {
+        "name": current_user["name"],
+        "email": current_user["email"],
+        "phone_number": current_user["phone_number"],
+        "state": current_user["state"],
+        "city": current_user["city"],
+    }
+
+    # Convert the data from dict to JSON string
+    old_values_json, _ = prepare_old_new_values(old_dict, None)
+
+    try:
+        # Log action
+        await log_action(
+            action='delete',
+            auditable_type='user',
+            auditable_id=user_id,
+            user_id=user_id,
+            old_values=old_values_json,
+            new_values=None,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
+
     # Delete user
     is_deleted = await delete_user(user_id)
 

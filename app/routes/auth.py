@@ -2,13 +2,21 @@ from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import text
 
 from app.config import templates
+from app.database import engine
 from app.schemas.schemas import UserCreate, UserLogin
+from app.services.audit_service import (
+    get_ip_from_request,
+    get_user_agent_from_request,
+    log_action,
+)
 from app.services.auth_service import (
     authenticate_user,
     create_jwt_token,
     create_user,
+    decode_token,
     validate_location,
 )
 
@@ -52,6 +60,37 @@ async def post_register(
     except ValueError:
         raise HTTPException(status_code=409, detail="Email or phone number already registered.")
 
+    # ==== AUDIT LOGS ENTRY: ====
+    # Get id of recently created user and log action
+    async with engine.connect() as conn:
+        query = await conn.execute(text("SELECT id FROM users WHERE id = LAST_INSERT_ID()"))
+        recent_id = query.scalar()
+
+    # Add new values to a dict and add log action
+    new_values={
+        "name": user_data.name,
+        "email": user_data.email,
+        "phone_number": user_data.phone_number
+    }
+
+    # Get IP Address of the request
+    ip_address = get_ip_from_request(request)
+
+    # Get User-Agent of the request
+    user_agent = get_user_agent_from_request(request)
+
+    # Log action
+    await log_action(
+        action='create',
+        auditable_type='user',
+        auditable_id=recent_id,
+        user_id=None, 
+        old_values=None,
+        new_values=new_values,
+        ip_address=ip_address,
+        user_agent=user_agent)
+    # ==== END OF AUDIT LOGS ENTRY ====
+
     # Flash message
     request.session["flash"] = "User registered successfully!"
 
@@ -92,6 +131,26 @@ async def post_login(
     if auth_user is None:
         raise HTTPException(status_code=401, detail="Invalid credentials. Retype login info.")
 
+    # ==== AUDIT LOGS ENTRY: ====
+    # Get IP Address of the request
+    ip_address = get_ip_from_request(request)
+
+    # Get User-Agent of the request
+    user_agent = get_user_agent_from_request(request)
+
+    # Log action
+    await log_action(
+        action='login',
+        auditable_type='user',
+        auditable_id=auth_user['id'],
+        user_id=auth_user['id'],
+        old_values=None,
+        new_values=None,
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+    # ==== END OF THE AUDIT LOGS ENTRY ====
+
     # Else, create a JWT token for user access
     token = create_jwt_token(auth_user["id"])
 
@@ -113,6 +172,32 @@ async def logout(request: Request):
     """
     # Delete the JWT token and cookie, then redirects to homepage "/" with a flash message
     response = RedirectResponse(url="/", status_code=303)
+
+    # ==== AUDIT LOGS ENTRY: ====
+    try:
+        # Get the user's session token
+        token = request.cookies.get("access_token")
+
+        # Decode the token to get the user's id
+        user_id = decode_token(token)
+
+        # Get IP Address and User-Agent of the request
+        ip_address = get_ip_from_request(request)
+        user_agent = get_user_agent_from_request(request)
+
+        # Log action
+        await log_action(
+            action='logout',
+            auditable_type='user',
+            auditable_id=user_id,
+            user_id=user_id,
+            old_values=None,
+            new_values=None,
+            ip_address=ip_address,
+            user_agent=user_agent)
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
     response.delete_cookie(key="access_token")
     request.session["flash"] = "Successfully logged out."
     request.session["flash_type"] = "info"

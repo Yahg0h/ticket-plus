@@ -5,6 +5,12 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app.config import templates
+from app.services.audit_service import (
+    get_ip_from_request,
+    get_user_agent_from_request,
+    log_action,
+    prepare_old_new_values,
+)
 from app.services.auth_service import verify_user_token
 from app.services.order_service import get_order_by_id
 from app.services.ticket_service import (
@@ -114,7 +120,7 @@ async def post_collect_holder_data(
                 holder_cpf="000.000.000-00",
                 price_paid=price_per_ticket
             )
-        # Fetch tickets novamente após criar
+        # Fetch tickets again
         existing_tickets = await get_tickets_by_order(order_id)
 
     # Check if quantity matches
@@ -137,6 +143,38 @@ async def post_collect_holder_data(
             holder_name=holder_name,
             holder_cpf=holder_cpf
         )
+
+        # ==== AUDIT LOGS ENTRY ====
+        # Fetch old ticket holder data
+        old_dict = {
+            "holder_name": ticket["holder_name"],
+            "holder_cpf": ticket["holder_cpf"]
+        }
+
+        # Fetch new ticket holder data
+        new_dict = {
+            "holder_name": holder_name,
+            "holder_cpf": holder_cpf
+        }
+
+        # Convert from dict to JSON string
+        old_values_json, new_values_json = prepare_old_new_values(old_dict, new_dict)
+
+        # Log action (for each ticket)
+        try:
+            await log_action(
+                action='update',
+                auditable_type='ticket',
+                auditable_id=ticket["id"],
+                user_id=user_id,
+                old_values=old_values_json,
+                new_values=new_values_json,
+                ip_address=get_ip_from_request(request),
+                user_agent=get_user_agent_from_request(request)
+            )
+        except ValueError:
+            pass
+        # ==== END OF AUDIT LOGS ENTRY ====
         
     # Flash message
     request.session["flash"] = "Holder data updated successfully!"

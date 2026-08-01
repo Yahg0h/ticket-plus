@@ -5,6 +5,12 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import settings, templates
+from app.services.audit_service import (
+    get_ip_from_request,
+    get_user_agent_from_request,
+    log_action,
+    prepare_old_new_values,
+)
 from app.services.auth_service import verify_user_token
 from app.services.order_service import (
     calculate_order_total,
@@ -165,6 +171,42 @@ async def stripe_webhook(request: Request):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+        # ==== AUDIT LOGS ENTRY ====
+        # Fetch order to get buyer_id
+        order = await get_order_by_id(order_id)
+        buyer_id = order["buyer_id"] if order else None
+
+        # Fetch old order and payment status
+        old_dict = {
+            "payment_status": 'pending',
+            "order_status": 'pending'
+        }
+    
+        # Fetch new order and payment status
+        new_dict = {
+            "payment_status": 'paid',
+            "order_status": 'confirmed'
+        }
+    
+        # Convert from dict to JSON string
+        old_values_json, new_values_json = prepare_old_new_values(old_dict, new_dict)
+    
+        # Log action
+        try:
+            await log_action(
+                action='update',
+                auditable_type='order',
+                auditable_id=order_id,
+                user_id=buyer_id,
+                old_values=old_values_json,
+                new_values=new_values_json,
+                ip_address=None,
+                user_agent=None
+            )
+        except ValueError:
+            pass
+        # ==== END OF AUDIT LOGS ENTRY ====
+
     # If everything went well, return success
     return {"status": "success"}
 
@@ -235,6 +277,36 @@ async def post_checkout(
         quantity,
         total_amount
     )
+
+    # ==== AUDIT LOGS ENTRY ====
+    # Fetch order data
+    new_values = {
+        "event_id": event["event_id"],
+        "ticket_type_id": ticket_type_id,
+        "quantity": quantity,
+        "total_amount": total_amount,
+        "payment_status": 'pending',
+        "order_status": 'pending'
+    }
+
+    # Convert from dict to JSON string
+    _ , new_values_json = prepare_old_new_values(None, new_values)
+
+    # Log action
+    try:
+        await log_action(
+            action='create',
+            auditable_type='order',
+            auditable_id=order_id,
+            user_id=user_id,
+            old_values=None,
+            new_values=new_values_json,
+            ip_address=get_ip_from_request(request),
+            user_agent=get_user_agent_from_request(request)
+        )
+    except ValueError:
+        pass
+    # ==== END OF AUDIT LOGS ENTRY ====
 
     # Create a Stripe Payment Intent
     try:
