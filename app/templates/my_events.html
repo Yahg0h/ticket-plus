@@ -51,7 +51,9 @@
                                 <a href="/events/{{ event.id }}" class="btn btn-sm btn-info">👁️ Ver</a>
                                 <a href="/events/{{ event.id }}/lotes" class="btn btn-sm btn-primary">🎟️ Lotes</a>
                                 <a href="/events/{{ event.id }}/edit" class="btn btn-sm btn-warning">✏️ Editar</a>
-                                <a href="/events/{{ event.id }}/delete" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja deletar este evento?')">🗑️ Deletar</a>
+                                <form method="POST" action="/events/{{ event.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível!');">
+                                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Deletar</button>
+                                </form>
                             </div>
                         </div>
                     </div>

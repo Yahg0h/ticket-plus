@@ -1,10 +1,11 @@
-from sqlalchemy import text
+from io import BytesIO
 
 import qrcode
-from io import BytesIO
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
+from sqlalchemy import text
+
 from app.database import engine
 
 # ==========================================
@@ -20,11 +21,6 @@ async def create_ticket(
 ) -> int:
     """
     Create a new ticket in the database.
-    
-    Hint:
-    1. INSERT into tickets with: order_id, ticket_type_id, holder_name, holder_cpf, price_paid
-    2. Set status = 'valid' (default for new tickets)
-    3. Commit and return the newly created ticket's ID
     
     Args:
         order_id: Order ID that this ticket belongs to
@@ -66,10 +62,6 @@ async def get_ticket_by_id(ticket_id: int) -> dict | None:
     """
     Fetch a ticket by ID from the database.
     
-    Hint:
-    1. Query: SELECT * FROM tickets WHERE id = :ticket_id
-    2. Return dict or None
-    
     Args:
         ticket_id: Ticket ID
     
@@ -93,10 +85,6 @@ async def get_tickets_by_order(order_id: int) -> list[dict]:
     """
     Fetch all tickets associated with a specific order.
     
-    Hint:
-    1. Query: SELECT * FROM tickets WHERE order_id = :order_id ORDER BY created_at ASC
-    2. Convert all rows to dicts and return as list
-    
     Args:
         order_id: Order ID
     
@@ -118,13 +106,6 @@ async def get_tickets_by_order(order_id: int) -> list[dict]:
 async def get_tickets_by_buyer(buyer_id: int) -> list[dict]:
     """
     Fetch all tickets purchased by a specific buyer (user).
-    
-    Hint:
-    1. Query: SELECT t.* FROM tickets t
-              JOIN orders o ON t.order_id = o.id
-              WHERE o.buyer_id = :buyer_id
-              ORDER BY t.created_at DESC
-    2. Convert all rows to dicts and return as list
     
     Args:
         buyer_id: User ID of the buyer
@@ -158,11 +139,6 @@ async def update_ticket_holder(
 ) -> bool:
     """
     Update ticket holder information (name and CPF).
-    
-    Hint:
-    1. Build dynamic query with fields
-    2. Query: UPDATE tickets SET holder_name = :holder_name, holder_cpf = :holder_cpf WHERE id = :ticket_id
-    3. Commit and return True
     
     Args:
         ticket_id: Ticket ID
@@ -217,10 +193,6 @@ async def update_ticket_status(
     """
     Update ticket status (valid, used, cancelled).
     
-    Hint:
-    1. Query: UPDATE tickets SET status = :status WHERE id = :ticket_id
-    2. Commit and return True
-    
     Args:
         ticket_id: Ticket ID
         status: New status (valid, used, cancelled)
@@ -251,10 +223,6 @@ async def mark_ticket_as_used(ticket_id: int) -> bool:
     """
     Mark a ticket as 'used' (for event check-in).
     
-    Hint:
-    1. Call: await update_ticket_status(ticket_id, 'used')
-    2. Return result
-    
     Args:
         ticket_id: Ticket ID
     
@@ -275,12 +243,6 @@ async def mark_ticket_as_used(ticket_id: int) -> bool:
 async def check_ticket_ownership(ticket_id: int, buyer_id: int) -> bool:
     """
     Verify that a ticket belongs to a specific buyer.
-    
-    Hint:
-    1. Query: SELECT t.id FROM tickets t
-              JOIN orders o ON t.order_id = o.id
-              WHERE t.id = :ticket_id AND o.buyer_id = :buyer_id
-    2. Return True if found, False if not found
     
     Args:
         ticket_id: Ticket ID
@@ -313,10 +275,6 @@ async def get_order_tickets_count(order_id: int) -> int:
     """
     Get the count of tickets for a specific order.
     
-    Hint:
-    1. Query: SELECT COUNT(*) as count FROM tickets WHERE order_id = :order_id
-    2. Return the count value
-    
     Args:
         order_id: Order ID
     
@@ -340,15 +298,6 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
     """
     Generate a PDF for a ticket with QR code.
     
-    Hint:
-    1. Fetch ticket: ticket = await get_ticket_by_id(ticket_id)
-    2. If not found, raise ValueError
-    3. Use reportlab to create PDF:
-       - Create a canvas with ticket info
-       - Generate QR code (use qrcode library)
-       - Add ticket details: ID, holder_name, holder_cpf, status
-       - Return PDF bytes
-    
     Args:
         ticket_id: Ticket ID
     
@@ -358,9 +307,7 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
     Raises:
         ValueError: If ticket not found or PDF generation fails
     """
-    # TODO: Implement PDF generation
-    # Libraries needed: reportlab, qrcode, pillow
-    # Consider: from io import BytesIO
+    # Fetch ticket
     ticket = await get_ticket_by_id(ticket_id)
 
     if not ticket:
@@ -370,23 +317,23 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=letter)
         
-        # Cabeçalho
+        # Header
         p.setFont("Helvetica-Bold", 20)
         p.drawString(100, 700, f"TICKET #{ticket_id}")
         
-        # Dados do titular (Correção das aspas aqui)
+        # Holder data
         p.setFont("Helvetica", 12)
         p.drawString(100, 660, f"Holder Name: {ticket['holder_name']}")
         p.drawString(100, 640, f"CPF: {ticket['holder_cpf']}")
         p.drawString(100, 620, f"Status: {ticket['status']}")
         
-        # Geração do QR Code (Correção das aspas aqui)
+        # QR code generation
         qr_data = f"Ticket ID: {ticket['id']} | CPF: {ticket['holder_cpf']} | Status: {ticket['status']}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_data)
         qr.make(fit=True)
         
-        # Conversão e renderização da imagem
+        # Conversion and image rendering
         qr_img = qr.make_image(fill_color="black", back_color="white")
         qr_buffer = BytesIO()
         qr_img.save(qr_buffer, format="PNG")
@@ -395,7 +342,7 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
         reader = ImageReader(qr_buffer)
         p.drawImage(reader, 100, 450, width=150, height=150)
         
-        # Finalização do PDF
+        # Final PDF
         p.showPage()
         p.save()
         
