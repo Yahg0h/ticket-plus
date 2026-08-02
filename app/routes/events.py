@@ -16,6 +16,7 @@ from sqlalchemy import text
 
 from app.config import templates
 from app.database import engine
+from app.middleware.rate_limiter import limiter
 from app.schemas.schemas import EventCreate, EventUpdate, TicketTypeCreate
 from app.services.audit_service import (
     get_ip_from_request,
@@ -129,6 +130,7 @@ async def get_create_event(
 
 
 @router.post("/create", response_class=HTMLResponse)
+@limiter.limit("20/day")
 async def post_create_event(
     request: Request,
     user_id: int = Depends(verify_user_token),

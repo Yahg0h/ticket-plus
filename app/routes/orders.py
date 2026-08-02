@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import settings, templates
+from app.middleware.rate_limiter import limiter
 from app.services.audit_service import (
     get_ip_from_request,
     get_user_agent_from_request,
@@ -248,6 +249,7 @@ async def get_checkout_page(
 
 
 @router.post("/{ticket_type_id}", response_class=HTMLResponse)
+@limiter.limit("10/minute")
 async def post_checkout(
     request: Request,
     ticket_type_id: int,

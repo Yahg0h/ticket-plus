@@ -1,9 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
+from app.middleware.rate_limiter import limiter
 from app.routes.auth import router as auth_router
 from app.routes.events import router as events_router
 from app.routes.orders import router as orders_router
@@ -19,16 +22,22 @@ app = FastAPI(
     debug=settings.DEBUG
 )
 
+# Add rate limiter to app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Configure Jinja2 and flash messages
 app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
 
 # Mount and point to the static directory (CSS, JS and images)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Custom handler that fetches every HTTPException and renders a error message to the user
-# Errors 404, 500 and 403 renders error.html, while the rest displays a flash message.
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Handle HTTPException errors.
+    Errors 404, 500 and 403 renders error.html, while the rest displays a flash message..
+    """
     # If the error is (404, 500, 403), then render error.html
     if exc.status_code in [404, 500, 403]:
         return templates.TemplateResponse(
@@ -46,6 +55,29 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     response = RedirectResponse(url="/", status_code=303)
     request.session["flash"] = exc.detail
     request.session["flash_type"] = "error"  # Message type (error, success, info)
+    return response
+
+@app.exception_handler(RateLimitExceeded)
+async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """
+    Handle rate limit exceeded errors (HTTP 429).
+    Show specific limit message and wait time.
+    """
+    # Extract message info
+    detail = exc.detail  # E.g: "5 per 15 minutes"
+    
+    # Detail parsing (ex: "5 per 15 minutes" -> limit and wait time)
+    parts = detail.split(" per ")
+    if len(parts) == 2:
+        limit_count = parts[0]  # "5"
+        time_period = parts[1]  # "15 minutes"
+        message = f"Limit of {limit_count} requests per {time_period} exceeded. Try again in a few minutes."
+    else:
+        message = "Too Many Requests. Try again in a few minutes."
+    
+    response = RedirectResponse(url="/", status_code=303)
+    request.session["flash"] = message
+    request.session["flash_type"] = "warning"
     return response
 
 # Root route

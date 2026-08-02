@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from app.config import templates
 from app.database import engine
+from app.middleware.rate_limiter import limiter
 from app.schemas.schemas import EMAIL_REGEX, PHONE_REGEX, UserCreate, UserLogin
 from app.services.audit_service import (
     get_ip_from_request,
@@ -118,6 +119,7 @@ async def get_login(request: Request):
 
 
 @router.post("/login", response_class=HTMLResponse)
+@limiter.limit("5/15minutes")
 async def post_login(
     request: Request,
     user: Annotated[UserLogin, Form()]
