@@ -134,7 +134,7 @@ async def get_create_event(
 async def post_create_event(
     request: Request,
     user_id: int = Depends(verify_user_token),
-    event_data: Annotated[EventCreate, Form()] = None,
+    event_data: Annotated[EventCreate, Form()] = None
 ):
     """
     Create a new event (requires login).

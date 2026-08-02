@@ -6,6 +6,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
+from app.middleware.csrf import CsrfMiddleware
 from app.middleware.rate_limiter import limiter
 from app.routes.auth import router as auth_router
 from app.routes.events import router as events_router
@@ -26,7 +27,8 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Configure Jinja2 and flash messages
+# Middlewares (CSRF Protection , Jinja2 and Flash messages)
+app.add_middleware(CsrfMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
 
 # Mount and point to the static directory (CSS, JS and images)
@@ -93,6 +95,14 @@ async def root(request: Request, user_id: int | None = Depends(get_current_user_
         "index.html",
         {"request": request, "user_id": user_id}
     )
+
+# CSRF token route
+@app.get("/csrf-token")
+async def get_csrf_token(request: Request):
+    """
+    Endpoint to get the CSRF token to forms.
+    """
+    return {"csrf_token": request.session.get("csrf_token", "")}
 
 # Auth router
 app.include_router(auth_router)

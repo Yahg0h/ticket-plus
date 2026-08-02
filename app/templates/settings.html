@@ -30,6 +30,9 @@
                     <p class="text-muted">Ações irreversíveis. Use com cuidado.</p>
                     
                     <form method="POST" action="/users/settings/delete-account" onsubmit="return confirm('Você tem certeza que deseja deletar sua conta? Esta ação é irreversível!');">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        
                         <button type="submit" class="btn btn-danger">
                             🗑️ Deletar Minha Conta
                         </button>

@@ -10,6 +10,9 @@
                 <h1 class="card-title text-center mb-4">Crie sua Conta 🎫</h1>
                 
                 <form method="POST" action="/auth/register">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
                     <!-- Nome -->
                     <div class="mb-3">
                         <label for="name" class="form-label">Nome Completo</label>

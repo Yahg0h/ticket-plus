@@ -82,6 +82,9 @@
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="/events/{{ event.id }}/lotes/{{ ticket.id }}/editar" class="btn btn-warning" title="Editar">✏️</a>
                                             <form method="POST" action="/events/{{ event.id }}/lotes/{{ ticket.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este lote?');">
+                                                <!-- CSRF Token -->
+                                                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                                                
                                                 <button type="submit" class="btn btn-sm btn-danger" title="Deletar">🗑️</button>
                                             </form>
                                         </div>
@@ -107,6 +110,9 @@
         </div>
         <div class="card-body">
             <form method="POST" action="/events/{{ event.id }}/lotes">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                
                 <div class="row">
                     <!-- Tipo de Lote -->
                     <div class="col-md-3">

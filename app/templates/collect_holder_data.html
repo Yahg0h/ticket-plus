@@ -46,6 +46,9 @@
                 <h5 class="card-title mb-4">👥 Informações dos Titulares</h5>
                 
                 <form method="POST" action="/tickets/collect/{{ order['id'] }}" id="holderForm">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                    
                     <!-- Dynamic Ticket Forms -->
                     {% for i in range(1, order["quantity"] + 1) %}
                         <div class="card mb-3 p-3" style="background-color: #f8f9fa;">

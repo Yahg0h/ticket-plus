@@ -10,3 +10,7 @@ dist/
 build/
 app/static/images/events/*
 !app/static/images/events/.gitkeep
+cookies.txt
+token.txt
+*.cookies
+*.tokens

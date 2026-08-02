@@ -52,6 +52,9 @@
                                 <a href="/events/{{ event.id }}/lotes" class="btn btn-sm btn-primary">🎟️ Lotes</a>
                                 <a href="/events/{{ event.id }}/edit" class="btn btn-sm btn-warning">✏️ Editar</a>
                                 <form method="POST" action="/events/{{ event.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível!');">
+                                    <!-- CSRF Token -->
+                                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
                                     <button type="submit" class="btn btn-sm btn-danger">🗑️ Deletar</button>
                                 </form>
                             </div>

@@ -10,6 +10,9 @@
                 <h1 class="card-title text-center mb-4">🎪 Criar Novo Evento</h1>
 
                 <form method="POST" action="/events/create" enctype="multipart/form-data">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
                     <!-- Título do Evento -->
                     <div class="mb-3">
                         <label for="title" class="form-label">Título do Evento *</label>

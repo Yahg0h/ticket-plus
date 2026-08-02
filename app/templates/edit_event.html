@@ -14,7 +14,9 @@
 
             <!-- Form -->
             <form method="POST" action="/events/{{ event.id }}/edit" class="needs-validation" novalidate enctype="multipart/form-data">
-                
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
                 <!-- Título -->
                 <div class="mb-3">
                     <label for="title" class="form-label">Título do Evento *</label>
@@ -171,6 +173,9 @@
                 </div>
                 <div class="col-md-4 text-end">
                     <form method="POST" action="/events/{{ event.id }}/delete" style="display: inline;">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        
                         <button 
                             type="submit" 
                             class="btn btn-danger btn-lg"

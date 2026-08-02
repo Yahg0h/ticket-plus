@@ -10,6 +10,9 @@
                 <h1 class="card-title text-center mb-4">Bem-vindo de volta! 🎫</h1>
                 
                 <form method="POST" action="/auth/login">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
                     <!-- Email ou Telefone -->
                     <div class="mb-3">
                         <label for="email" class="form-label">Email ou Telefone</label>

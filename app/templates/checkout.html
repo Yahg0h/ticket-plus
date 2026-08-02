@@ -60,6 +60,9 @@
 
                 <!-- Quantidade Selection -->
                 <form method="POST" action="/checkout/{{ ticket_type.id }}" class="mt-4">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                    
                     <div class="mb-4">
                         <label for="quantity" class="form-label fw-bold">Quantidade de Ingressos 🎫</label>
                         <div class="input-group">
