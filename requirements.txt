@@ -22,3 +22,5 @@ pillow
 
 aiofiles
 slowapi
+
+validate-docbr

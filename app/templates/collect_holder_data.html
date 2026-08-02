@@ -74,18 +74,19 @@
                                 </div>
 
                                 <!-- Holder CPF -->
-                                <div class="col-md-6 mb-3">
-                                    <label for="holder_cpf_{{ i }}" class="form-label">CPF *</label>
+                                <div class="mb-3">
+                                    <label for="holder_cpf" class="form-label">CPF do Titular *</label>
                                     <input 
                                         type="text" 
-                                        class="form-control cpf-mask" 
-                                        id="holder_cpf_{{ i }}" 
-                                        name="holder_cpf_{{ i }}"
-                                        placeholder="000.000.000-00"
+                                        class="form-control" 
+                                        id="holder_cpf" 
+                                        name="holder_cpf"
+                                        placeholder="123.456.789-01"
+                                        pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$"
                                         maxlength="14"
                                         required
                                     >
-                                    <small class="text-muted">Formato: 000.000.000-00</small>
+                                    <small class="form-text text-muted">Formato: 123.456.789-01 ou 12345678901</small>
                                 </div>
                             </div>
                         </div>

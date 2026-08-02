@@ -3,13 +3,29 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from validate_docbr import CPF
 
 # ==========================================
 # 1. Regex Constants (Validations)
 # ==========================================
 # Accepts formated CPF (000.000.000-00) or numbers only (00000000000)
-CPF_REGEX = r"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$"
+CPF_REGEX = r"^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$"
+
+def validate_cpf(cpf_string: str) -> bool:
+    """
+    Validate a CPF using a check digit algorithm.
+    Accepts formated or numbers only.
+    """
+    if not cpf_string:
+        return False
+
+    # Remove formatting (dots and -)
+    cpf_clean = cpf_string.replace(".", "").replace("-", "")
+
+    # Validate cpf using validate-docbr, then return
+    validador = CPF()
+    return validador.validate(cpf_clean)
 
 # Accepts formated Brazilian phone numbers (with or without DDD, with or without +55)
 # Ex: (11) 99999-9999, 11999999999, +5511999999999
@@ -81,15 +97,12 @@ class UserBase(BaseModel):
         
         # Validate email only if provided
         if self.email:
-            import re
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, self.email):
                 raise ValueError("Formato de email inválido.")
         
         # Validate phone only if provided
-        if self.phone_number:
-            import re
-            if not re.match(PHONE_REGEX, self.phone_number):
+        if self.phone_number and not re.match(PHONE_REGEX, self.phone_number):
                 raise ValueError("Formato de telefone inválido.")
         
         return self
@@ -98,6 +111,16 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Scheme to create a user (POST)"""
     password: str = Field(..., min_length=6, max_length=255)
+
+    @field_validator("cpf")
+    @classmethod
+    def validate_cpf_field(cls, v: str) -> str:
+        if not validate_cpf(v):
+            raise ValueError("CPF inválido. Verifique o número e tente novamente.")
+
+        # Else, clean the CPF for formated (dots and -)
+        cpf_clean = v.replace(".", "").replace("-", "")
+        return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-{cpf_clean[9:11]}"
 
 
 class UserLogin(BaseModel):
@@ -296,6 +319,19 @@ class TicketUpdate(BaseModel):
     holder_name: str | None = Field(default=None, max_length=255)
     holder_cpf: str | None = Field(default=None, pattern=CPF_REGEX, max_length=14)
     status: TicketStatus | None = None
+
+    @field_validator("holder_cpf")
+    @classmethod
+    def validate_holder_cpf(cls, v: str) -> str:
+        """
+        Validate holder CPF and cleans the format.
+        """
+        if not validate_cpf(v):
+            raise ValueError("CPF do titular inválido.")
+
+        # Cleans to the format with dots and -
+        cpf_clean = v.replace(".", "").replace("-", "")
+        return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-{cpf_clean[9:11]}"
 
     model_config = ConfigDict(from_attributes=True)
 
