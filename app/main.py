@@ -153,6 +153,21 @@ async def get_csrf_token(request: Request):
     """
     return {"csrf_token": request.session.get("csrf_token", "")}
 
+# About route
+@app.get("/about", response_class=HTMLResponse)
+async def about(request: Request, user_id: int | None = Depends(get_current_user_optional)):
+    """
+    Render About page with project information.
+    """
+    return templates.TemplateResponse(
+        request,
+        "about.html",
+        {
+            "request": request,
+            "user_id": user_id
+        }
+    )
+
 # Auth router
 app.include_router(auth_router)
 
