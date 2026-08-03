@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Health Check - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Title -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-2">
+                <i class="bi bi-heart-pulse"></i> Database Health Check
+            </h1>
+            <p class="text-muted">Monitore o status da conexão entre o TicketPlus e o seu banco de dados.</p>
+        </div>
+    </div>
+
+    <!-- Main Health Diagram -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm p-5">
+                <!-- Visual Layout: Client <-> Status <-> Database -->
+                <div class="d-flex align-items-center justify-content-between gap-4">
+                    
+                    <!-- Client (Left) -->
+                    <div class="text-center">
+                        <div style="font-size: 4rem; color: #0d6efd; margin-bottom: 10px;">
+                            <i class="bi bi-laptop"></i>
+                        </div>
+                        <p class="fw-bold">Seu Client<br><small class="text-muted">(TicketPlus)</small></p>
+                    </div>
+
+                    <!-- Connection Line with Status Icon (Middle) -->
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="position: relative; height: 80px;">
+                        <!-- Left Line -->
+                        <div style="flex: 1; height: 3px; background-color: #ddd;"></div>
+                        
+                        <!-- Status Icon (Checkmark or X) -->
+                        <div class="d-flex flex-column align-items-center text-center mx-3" style="font-size: 3.5rem; flex-shrink: 0;">
+                            {% if db_connected %}
+                                <div style="color: #28a745; line-height: 1;">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <p class="mt-2 small fw-bold text-success mb-0">Conectado</p>
+                            {% else %}
+                                <div style="color: #dc3545; line-height: 1;">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </div>
+                                <p class="mt-2 small fw-bold text-danger mb-0">Disconectado</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Right Line -->
+                        <div style="flex: 1; height: 3px; background-color: #ddd;"></div>
+                    </div>
+
+                    <!-- Database (Right) -->
+                    <div class="text-center">
+                        <div style="font-size: 4rem; color: #198754; margin-bottom: 10px;">
+                            <i class="bi bi-database"></i>
+                        </div>
+                        <p class="fw-bold">Banco de Dados<br><small class="text-muted">(MySQL)</small></p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metadata Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Metadata
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold" style="width: 30%;">Service:</td>
+                                <td>{{ service_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Status:</td>
+                                <td>
+                                    {% if db_connected %}
+                                        <span class="badge bg-success">Conectado</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Não conectado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Service Version:</td>
+                                <td>{{ service_version }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Connection tested at:</td>
+                                <td>{{ checked_at }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Details (if available) -->
+    {% if db_error %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <h5 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle"></i> Connection Error
+                </h5>
+                <p class="mb-0">{{ db_error }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+    /* Smooth transitions */
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Icon animations */
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .text-success i {
+        animation: pulse-green 2s infinite;
+    }
+
+    .text-danger i {
+        animation: pulse-red 2s infinite;
+    }
+</style>
+
+{% endblock %}

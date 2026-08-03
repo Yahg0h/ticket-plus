@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
@@ -25,3 +26,18 @@ async def get_db():
             yield session
         finally:
             await session.close()
+
+# Database connection function
+async def check_database_connection() -> tuple[bool, str | None]:
+    """
+    Check if database is connected by running a simple query.
+
+    Returns:
+        tuple: (is_connected: bool, error_message: str | None)
+    """
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return True, None
+    except Exception as e:
+        return False, str(e)

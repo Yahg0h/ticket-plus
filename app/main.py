@@ -1,4 +1,7 @@
+from datetime import datetime, timezone
+
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
@@ -6,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
+from app.database import check_database_connection
 from app.middleware.rate_limiter import limiter
 from app.routes.admin import router as admin_router
 from app.routes.auth import router as auth_router
@@ -81,6 +85,22 @@ async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
     request.session["flash_type"] = "warning"
     return response
 
+@app.exception_handler(RequestValidationError)
+async def custom_validation_error_handler(request: Request, exc: RequestValidationError):
+    """
+    Handle Pydantic validation errors (422) sending flash messages
+    and redirecting back to the previous page.
+    """
+    # Gets the URL from where the user came from or goes to fallback "/"
+    referer = request.headers.get("referer", "/")
+    
+    # Flash message
+    request.session["flash"] = "Invalid form data. Please check your inputs."
+    request.session["flash_type"] = "danger"
+    
+    # Redirect
+    return RedirectResponse(url=referer, status_code=303)
+
 # Root route
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request, user_id: int | None = Depends(get_current_user_optional)):
@@ -93,6 +113,36 @@ async def root(request: Request, user_id: int | None = Depends(get_current_user_
         request,
         "index.html",
         {"request": request, "user_id": user_id}
+    )
+
+# Database health check route
+@app.get("/health", response_class=HTMLResponse)
+async def health_check(request: Request, user_id: int | None = Depends(get_current_user_optional)):
+    """
+    Health check endpoint showing service and database status.
+    """
+    connect_check, error_message = await check_database_connection()
+    now = datetime.now(tz=timezone.utc)
+    health_dict = {
+        "service_name": 'TicketPlus',
+        "service_version": '1.0.0',
+        "db_connected": connect_check,
+        "checked_at": now,
+        "db_error": error_message
+    }
+
+    # Render health status page with everything
+    return templates.TemplateResponse(
+        request,
+        "health.html",
+        {
+            "request": request,
+            "service_name": health_dict["service_name"],
+            "service_version": health_dict["service_version"],
+            "db_connected": health_dict["db_connected"],
+            "checked_at": health_dict["checked_at"],
+            "db_error": health_dict["db_error"]
+        }
     )
 
 # CSRF token route
