@@ -1,3 +1,7 @@
+"""
+All services related to treating and validating image upload (Event Banners) in TicketPlus.
+"""
+
 import uuid
 from pathlib import Path
 
@@ -28,13 +32,13 @@ async def upload_banner_image(file: UploadFile) -> str:
     extension = Path(file.filename or "").suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
         raise ValueError(
-            f"Invalid format file. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+            f"Formato de arquivo inválido. Formatos permitidos: {', '.join(ALLOWED_EXTENSIONS)}"
         )
 
     # Size validation
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
-        raise ValueError("File size exceeds max limit of 5MB.")
+        raise ValueError("O tamanho do arquivo excede o limite máximo de 5 MB.")
 
     # Reset the file point
     await file.seek(0)
@@ -46,7 +50,7 @@ async def upload_banner_image(file: UploadFile) -> str:
     unique_filename = f"{uuid.uuid4()}{extension}"
     file_path = UPLOAD_DIR / unique_filename
 
-    # ✅ Use async file write with aiofiles
+    # Use async file write with aiofiles
     async with aiofiles.open(file_path, "wb") as f:
         await f.write(contents)
 
@@ -75,8 +79,8 @@ async def delete_banner_image(file_path: str) -> bool:
 
     try:
         if full_path.exists() and full_path.is_file():
-            full_path.unlink()  # ✅ unlink() é rápido o suficiente, pode ficar síncrono
+            full_path.unlink()
             return True
         return False
     except OSError as e:
-        raise ValueError(f"Error upon deleting file: {str(e)}")
+        raise ValueError(f"Erro ao deletar arquivo: {str(e)}")

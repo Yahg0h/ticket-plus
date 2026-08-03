@@ -1,3 +1,7 @@
+"""
+All services related to ticket management used across all TicketPlus routes.
+"""
+
 from io import BytesIO
 
 import qrcode
@@ -37,7 +41,7 @@ async def create_ticket(
     """
     # Check if the ticket has a owner attached to it, if not, raise ValueError
     if not holder_name or not holder_cpf:
-        raise ValueError("Ticket must have a owner attached to it.")
+        raise ValueError("Um ingresso deve ter um nome atribuído a ele.")
 
     # Connect to database
     async with engine.connect() as conn:
@@ -158,7 +162,7 @@ async def update_ticket_holder(
 
         # If it doesn't exist, raise ValueError
         if not existing_ticket:
-            raise ValueError("Ticket not found.")
+            raise ValueError("Ingresso não encontrado.")
 
         # Else, create a dyanmic query that changes the holder's info
         updates = []
@@ -210,7 +214,7 @@ async def update_ticket_status(
 
         # If it doesn't, return ValueError
         if not existing_ticket:
-            raise ValueError("Ticket not found.")
+            raise ValueError("Ingresso não encontrado.")
 
         # Else, Update ticket's status
         await conn.execute(text("UPDATE tickets SET status = :status WHERE id = :ticket_id"), {"status": status, "ticket_id": ticket_id})
@@ -311,7 +315,7 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
     ticket = await get_ticket_by_id(ticket_id)
 
     if not ticket:
-        raise ValueError("Ticket not found.")
+        raise ValueError("Ingresso não encontrado.")
 
     try:
         buffer = BytesIO()
@@ -351,4 +355,4 @@ async def generate_ticket_pdf(ticket_id: int) -> bytes:
         return pdf_bytes
         
     except Exception as e:
-        raise ValueError(f"Error during PDF generation: {str(e)}")
+        raise ValueError(f"Erro durante a geração do PDF: {str(e)}")

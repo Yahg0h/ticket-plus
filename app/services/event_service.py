@@ -1,3 +1,7 @@
+"""
+All services related to event management used across all TicketPlus routes.
+"""
+
 from datetime import datetime, timezone
 
 from sqlalchemy import text
@@ -53,11 +57,11 @@ async def create_event(
         end_date = end_date.replace(tzinfo=timezone.utc)
 
     if start_date < now:
-        raise ValueError("It is not possible to have the start date of an event on a day that has already passed.")
+        raise ValueError("Não é possível definir a data de início de um evento para um dia que já passou.")
     
     # Check if the event end_date is early than the start_date, if it is, return ValueError
     if end_date < start_date:
-        raise ValueError("Event end date cannot be earlier than the start date.")
+        raise ValueError("A data de término do evento não pode ser anterior à data de início.")
     
     # Connect to database
     async with engine.connect() as conn:
@@ -191,7 +195,6 @@ async def update_event(
 ) -> bool:
     """
     Update an event (only by organizer).
-    FIXED: Separar detecção de mudança de localização da validação de tempo.
     """
     async with engine.connect() as conn:
         # Search DB for event to be updated and check organizer credential
@@ -203,7 +206,7 @@ async def update_event(
 
         # If not found or organizer_id doesn't match, return ValueError
         if not existing_event:
-            raise ValueError("Event not found or unauthorized")
+            raise ValueError("Evento não encontrado ou unauthorized.")
 
         # Build dynamic query where only the fields which were chosen to be changed get updated
         updates = []
@@ -248,7 +251,7 @@ async def update_event(
             days_until_start = (event_start - datetime.now(timezone.utc)).days
 
             if days_until_start < 30:
-                raise ValueError("Location can only be changed with 30 days in advance.")
+                raise ValueError("A localização só pode ser alterada com 30 dias de antecedência.")
         
         # If the location has changed and passed validation, add it to the updates.
         if state is not None and state.strip():
@@ -273,7 +276,7 @@ async def update_event(
 
             # If it is, return ValueError
             if total_capacity < total_sold:
-                raise ValueError("Cannot reduce capacity below tickets already sold.")
+                raise ValueError("Não é possível reduzir a capacidade para um nível inferior ao de ingressos já vendidos.")
             else:
                 # Else, update
                 updates.append("total_capacity = :total_capacity")
@@ -290,7 +293,7 @@ async def update_event(
             now = datetime.now(timezone.utc)
             
             if start_date < now:
-                raise ValueError("It is not possible to change the start date of an event that has already started.")
+                raise ValueError("Não é possível alterar a data de início de um evento que já começou.")
             else:
                 # Else, update
                 updates.append("start_date = :start_date")
@@ -305,7 +308,7 @@ async def update_event(
                 event_end = event_end.replace(tzinfo=timezone.utc)
             
             if end_date < event_end:
-                raise ValueError("New event end date cannot be earlier than the original start date.")
+                raise ValueError("A nova data de término do evento não pode ser anterior à data de início original.")
             else:
                 # Else, update
                 updates.append("end_date = :end_date")
@@ -313,7 +316,7 @@ async def update_event(
 
         if start_date and end_date and end_date < start_date:
             # Check if the event new end_date is early than the new start_date
-            raise ValueError("New event end date cannot be earlier than the new start_date.")
+            raise ValueError("A nova data de término do evento não pode ser anterior à nova data de início.")
 
         if not updates:
             # If there aren't any updates, just return True
@@ -351,7 +354,7 @@ async def delete_event(event_id: int, organizer_id: int) -> bool:
 
         # If event not found or the current user isn't the event organizer, return ValueError
         if not existing_event:
-            raise ValueError("Event not found or Unauthorized access detected.")
+            raise ValueError("Evento não encontrado ou unauthorized.")
 
         # Else, delete the event and return True
         await conn.execute(text("DELETE FROM events WHERE id = :event_id"), {"event_id": event_id})
@@ -512,11 +515,11 @@ async def delete_ticket_type(ticket_type_id: int) -> bool:
 
         # If it doesn't exist, raise ValueError
         if not existing_ticket_type:
-            raise ValueError("Ticket type not found or doesn't exist.")
+            raise ValueError("Lote não encontrado ou não existe.")
 
         # If there is already sold tickets under ticket type, raise ValueError
         if existing_ticket_type["quantity_sold"] > 0:
-            raise ValueError("Cannot delete ticket type: tickets already sold under it.")
+            raise ValueError("Não é possível deletar lote: ingressos já foram vendidos sob ele.")
         # Delete the ticket type
         await conn.execute(text("DELETE FROM ticket_types WHERE id = :ticket_type_id"), {"ticket_type_id": ticket_type_id})
         await conn.commit()

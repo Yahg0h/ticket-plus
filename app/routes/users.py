@@ -1,3 +1,7 @@
+"""
+User management related routes for TicketPlus.
+"""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -40,7 +44,7 @@ async def get_profile(
     user_data = await get_user_by_id(user_id)
 
     if not user_data:
-        raise HTTPException(status_code=404, detail="User not found or doesn't exist")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encontrado ou não existe.")
 
     return templates.TemplateResponse(
         request,
@@ -70,7 +74,7 @@ async def get_edit_profile(
 
     # If user isn't found, return 404
     if not user_data:
-        raise HTTPException(status_code=404, detail="User not found or doesn't found.")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encontrado ou não existe.")
 
     # Render the profile edit form(?) page
     return templates.TemplateResponse(
@@ -98,11 +102,11 @@ async def post_edit_profile(
 
     # If the user is changing their email to a new one, check if that new email is already registered
     if user_data.email and user_data.email != current_user["email"] and await check_email_exists(user_data.email, exclude_user_id=user_id):
-        raise HTTPException(status_code=409, detail="This email is already registered.")
+        raise HTTPException(status_code=409, detail="Conflict: Esse email já está registrado.")
 
     # If the user is changing their phone number to a new one, check if that new phone number is already registered
     if user_data.phone_number and user_data.phone_number != current_user["phone_number"] and await check_phone_exists(user_data.phone_number, exclude_user_id=user_id):
-        raise HTTPException(status_code=409, detail="This phone number is already registered.")
+        raise HTTPException(status_code=409, detail="Conflict: Esse número de telefone já está registrado.")
 
     # Else, update the account info
     try:
@@ -114,7 +118,7 @@ async def post_edit_profile(
                           city=user_data.city,
                           password=user_data.password)
     except ValueError:
-        raise HTTPException(status_code=409, detail="New email or phone number is already registered.")
+        raise HTTPException(status_code=409, detail="Conflict: Novo email ou número de telefone já registrado.")
 
 
     # ==== AUDIT LOGS ENTRY ====
@@ -161,7 +165,7 @@ async def post_edit_profile(
     # ==== END OF AUDIT LOGS ENTRY
 
     # Flash message
-    request.session["flash"] = "Account profile information successfully updated."
+    request.session["flash"] = "Success: Informações de perfil atualizadas com sucesso."
 
     # Redirect back to profile
     return RedirectResponse(url="/users/profile", status_code=303)
@@ -184,7 +188,7 @@ async def get_settings(
 
     # If user isn't found, return 404
     if not user_data:
-        raise HTTPException(status_code=404, detail="User not found or doesn't found.")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encontrado ou não existe.")
 
     # Render settings page with user info
     return templates.TemplateResponse(
@@ -242,11 +246,11 @@ async def delete_account(
 
     # If the deletion went well, delete the user's access token, display a flash message and redirect to login
     if is_deleted:
-        request.session["flash"] = "Account successfully deleted."
+        request.session["flash"] = "Success: Conta deletada com sucesso."
         response = RedirectResponse(url="/auth/login", status_code=303)
         response.delete_cookie(key="access_token")
     else:
         # Else, something with the server stopped the deletion, return 500
-        raise HTTPException(status_code=500, detail="It was not possible to delete your account at this time. Please try again later.")
+        raise HTTPException(status_code=500, detail="Não possível deletar sua conta nesse momento. Por favor, tente novamente mais tarde.")
 
     return response

@@ -1,3 +1,7 @@
+"""
+All services related to authentication used across all TicketPlus routes.
+"""
+
 import json
 from datetime import datetime, timedelta, timezone
 
@@ -58,11 +62,11 @@ def decode_token(token: str, ignore_exp: bool = False) -> int:
         user_id = payload.get("sub")
         # If there isn't a valid user_id in the token, return error
         if not user_id:
-            raise ValueError("Invalid token: no user_id")
+            raise ValueError("Token inválido: no user_id")
         # Else, return the user_id
         return int(user_id)
     except Exception as e:
-        raise ValueError(f"Token decode failed: {str(e)}")
+        raise ValueError(f"Decodificação de token falhou: {str(e)}")
 
 async def verify_user_token(request: Request) -> int:
     """
@@ -70,13 +74,13 @@ async def verify_user_token(request: Request) -> int:
     """
     token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=401, detail="Not logged in.")
+        raise HTTPException(status_code=401, detail="Unauthorized: Não logado.")
     
     try:
         user_id = decode_token(token, ignore_exp=False)
         return user_id
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid token.")
+        raise HTTPException(status_code=401, detail="Unauthorized: Token inválido.")
 
 async def get_current_user_optional(request: Request) -> int | None:
     """

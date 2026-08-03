@@ -1,3 +1,7 @@
+"""
+Authentication routes for TicketPlus.
+"""
+
 import re
 from typing import Annotated
 
@@ -54,13 +58,13 @@ async def post_register(
     """
     # Check if the user location is valid
     if not await validate_location(user_data.state, user_data.city):
-        raise HTTPException(status_code=400, detail="Invalid state or city.")
+        raise HTTPException(status_code=400, detail="Bad Request: Cidade ou Estado inválido.")
 
     # If valid, try to INSERT user in the database
     try:
         await create_user(user_data.name, user_data.email, user_data.phone_number, user_data.password, user_data.cpf, user_data.state, user_data.city)
     except ValueError:
-        raise HTTPException(status_code=409, detail="Email or phone number already registered.")
+        raise HTTPException(status_code=409, detail="Conflict: Email ou número de telefone já registrado.")
 
     # ==== AUDIT LOGS ENTRY: ====
     # Get id of recently created user and log action
@@ -94,7 +98,7 @@ async def post_register(
     # ==== END OF AUDIT LOGS ENTRY ====
 
     # Flash message
-    request.session["flash"] = "User registered successfully!"
+    request.session["flash"] = "Success: Usuário registrado com sucesso!"
 
     # Redirect user to login
     return RedirectResponse(url="/auth/login", status_code=303)
@@ -139,14 +143,14 @@ async def post_login(
         user.email = None
         user.phone_number = user_login_method
     else:
-        raise HTTPException(status_code=400, detail="Email or phone number isn't valid. Please try again.")
+        raise HTTPException(status_code=400, detail="Bad Request: Email ou número de telefone é inválido. Por favor, tente novamente.")
 
     # Authenticate the user
     auth_user = await authenticate_user(user.email, user.phone_number, user.password)
 
     # If the response is None, auth failed, raise 401
     if auth_user is None:
-        raise HTTPException(status_code=401, detail="Invalid credentials. Retype login info.")
+        raise HTTPException(status_code=401, detail="Unauthorized: Credenciais inválidas. Redigite as informações de Login.")
 
     # ==== AUDIT LOGS ENTRY: ====
     # Get IP Address of the request
@@ -172,7 +176,7 @@ async def post_login(
     token = create_jwt_token(auth_user["id"])
 
     # Add token to a cookie and redirect to homepage "/" with a flash message
-    request.session["flash"] = "Logged in successfully!"
+    request.session["flash"] = "Success: Logado com sucesso!"
     response = RedirectResponse(url="/", status_code=303)
     response.set_cookie(key="access_token", value=token, httponly=True)
     return response
@@ -216,6 +220,6 @@ async def logout(request: Request):
         pass
     # ==== END OF AUDIT LOGS ENTRY ====
     response.delete_cookie(key="access_token")
-    request.session["flash"] = "Successfully logged out."
+    request.session["flash"] = "Success: Desconectado com sucesso."
     request.session["flash_type"] = "info"
     return response

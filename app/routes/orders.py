@@ -1,3 +1,7 @@
+"""
+Orders routes for TicketPlus.
+"""
+
 from typing import Annotated
 
 import stripe
@@ -45,16 +49,16 @@ async def payment_success(
     # Get order_id from session
     order_id = request.session["order_id"]
 
-    # If order_id not found in the user's session, return 400
+    # If order_id not found in the user's session, return 404
     if not order_id:
-        raise HTTPException(status_code=400, detail="No order found in session. Invalid flow.")
+        raise HTTPException(status_code=404, detail="Not Found: Nenhum pedido achado na sessão. Fluxo inválido.")
 
     # Get order info from it's id
     order = await get_order_by_id(order_id)
 
     # If the order doesn't exist, return 404
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Pedido não encontrado ou não existe.")
 
     # Return all info to render the success.html page
     return templates.TemplateResponse(
@@ -108,18 +112,18 @@ async def payment_cancel(
     # Get order_id from session
     order_id = request.session["order_id"]
 
-    # If order_id not found in the user's session, return 400
+    # If order_id not found in the user's session, return 404
     if not order_id:
-        raise HTTPException(status_code=400, detail="No order found in session. Invalid flow.")
+        raise HTTPException(status_code=404, detail="Not Found: Nenhum pedido encontrado na sessão. Fluxo inválido.")
 
     # Cancel order
     cancelled_order = await cancel_order(order_id)
 
     # Display a message based on if the order was cancelled or not
     if cancelled_order:
-        request.session["flash"] = "Payment cancelled."
+        request.session["flash"] = "Pagamento cancelado."
     else:
-        request.session["flash"] = "An error occurred while cancelling your payment. Please try again or try again later."
+        request.session["flash"] = "Um erro ocorreu enquanto cancelávamos seu pedido. Por favor, tente novamente agora ou mais tarde."
 
     # Redirect to events main page
     return templates.TemplateResponse(
@@ -148,9 +152,9 @@ async def stripe_webhook(request: Request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid payload.")
+        raise HTTPException(status_code=400, detail="Bad Request: Payload inválido.")
     except stripe.error.SignatureVerificationError:
-        raise HTTPException(status_code=400, detail="Invalid signature.")
+        raise HTTPException(status_code=400, detail="Bad Request: Assinatura inválida.")
 
     # Treats only the event that was successful
     if event["type"] == "payment_intent.succeeded":
@@ -229,7 +233,7 @@ async def get_checkout_page(
 
     # If it doesn't exist, return 404
     if not tt_event_info:
-        raise HTTPException(status_code=404, detail="Event and respective ticket types not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento e lotes respectivos não encontrados ou não existe.")
 
     # Separate event info from ticket type info
     event_info = {"organizer_id": tt_event_info["organizer_id"], "start_date": tt_event_info["start_date"]}
@@ -263,7 +267,7 @@ async def post_checkout(
     availability = await validate_ticket_availability(ticket_type_id, quantity)
 
     if not availability:
-        raise HTTPException(status_code=400, detail="Not enough tickets available.")
+        raise HTTPException(status_code=400, detail="Bad Request: Não há ingressos disponíveis.")
     
     # Get ticket type + respective event info
     event = await get_ticket_type_with_event(ticket_type_id)
@@ -321,7 +325,7 @@ async def post_checkout(
         raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
     
     # Flash message
-    request.session["flash"] = "Processing payment.. Please wait for next step."
+    request.session["flash"] = "Processando pagamento.. Por favor, espere o próximo passo."
     request.session["order_id"] = order_id
 
     # Return all necessary info to render payment_form.html

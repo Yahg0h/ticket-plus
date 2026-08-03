@@ -1,3 +1,7 @@
+"""
+Tickets related routes for TicketPlus.
+"""
+
 from io import BytesIO
 from typing import Annotated
 
@@ -53,11 +57,11 @@ async def get_collect_holder_data(
 
     # Check if the order doesn't exist, return 404
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Pedido não encontrado ou não existe.")
 
     # Check if the buyer of the order is the same person as the current user, if not, return 403
     if order["buyer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view the expected page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Count the tickets bought under the order_id
     ticket_count = await get_order_tickets_count(order_id)
@@ -97,11 +101,11 @@ async def post_collect_holder_data(
 
     # If the order isn't found, return 404
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Pedido não encontrado ou não existe.")
 
     # Check if the buyer of the order is the same person as the current user, if not, return 403
     if order["buyer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You don't have access to view this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Get form data in dynamic form
     form_data = await request.form()
@@ -125,7 +129,7 @@ async def post_collect_holder_data(
 
     # Check if quantity matches
     if len(existing_tickets) != order["quantity"]:
-        raise HTTPException(status_code=400, detail="Ticket count mismatch. Please contact support.")
+        raise HTTPException(status_code=400, detail="Bad Request: Erro na contagem de ingressos. Por favor, entre em contato com o suporte ou desenvolvedor.")
 
     # Loop each ticket and update with form data
     for i, ticket in enumerate(existing_tickets, start=1):
@@ -135,7 +139,7 @@ async def post_collect_holder_data(
 
         # Validate the holder data
         if not holder_name or not holder_cpf:
-            raise HTTPException(status_code=400, detail=f"Missing data for ticket {i}")
+            raise HTTPException(status_code=400, detail=f"Bad Request: Missing data for ticket {i}")
 
         # UPDATE ticket with real data
         await update_ticket_holder(
@@ -177,7 +181,7 @@ async def post_collect_holder_data(
         # ==== END OF AUDIT LOGS ENTRY ====
         
     # Flash message
-    request.session["flash"] = "Holder data updated successfully!"
+    request.session["flash"] = "Success: Titular do ingresso atualizado com sucesso!"
 
     # Redirect back to tickets page
     return RedirectResponse(url="/tickets", status_code=303)
@@ -243,14 +247,14 @@ async def view_ticket(
 
     # If the ticket isn't found, return 404
     if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Ingresso não encontrado ou não existe.")
 
     # Check if the current user is the owner/buyer of the ticket
     is_owner = await check_ticket_ownership(ticket_id, user_id)
 
     # If not, return 403
     if not is_owner:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Get all info about the order the ticket was purchased on
     order = await get_order_by_id(ticket["order_id"])
@@ -288,13 +292,13 @@ async def download_ticket_pdf(
 
     # If not return 403
     if not is_owner:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to perform this action or view this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Else, generate PDF
     try:
         pdf_bytes = await generate_ticket_pdf(ticket_id)
     except ValueError:
-        raise HTTPException(status_code=500, detail="A error occurred while generating the ticket PDF. Please try again.")
+        raise HTTPException(status_code=500, detail="Um erro ocorreu enquanto o PDF do ingresso era gerado. Por favor, tente novamente ou guarde o ingresso com outro métodos.")
 
     # Return FileResponse with the PDF to be shown
     return Response(

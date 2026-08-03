@@ -1,3 +1,9 @@
+"""
+The heart of the application.
+It manages the application configuration and the addition of features such as rate limiters, middleware, exception handlers, 
+static file serving, and routes (root, health check, CSRF token, about), as well as the integration of all route handlers from `app/routes`.
+"""
+
 from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -41,7 +47,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     """
     Handle HTTPException errors.
-    Errors 404, 500 and 403 renders error.html, while the rest displays a flash message..
+    Errors 404, 500 and 403 renders error.html, while the rest displays a flash message.
     """
     # If the error is (404, 500, 403), then render error.html
     if exc.status_code in [404, 500, 403]:
@@ -76,9 +82,9 @@ async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
     if len(parts) == 2:
         limit_count = parts[0]  # "5"
         time_period = parts[1]  # "15 minutes"
-        message = f"Limit of {limit_count} requests per {time_period} exceeded. Try again in a few minutes."
+        message = f"Limite de {limit_count} requisições por {time_period} excedido. Por favor, aguarde alguns minutos antes de tentar novamente."
     else:
-        message = "Too Many Requests. Try again in a few minutes."
+        message = "Too Many Requests. Tente novamente em alguns minutos."
     
     response = RedirectResponse(url="/", status_code=303)
     request.session["flash"] = message
@@ -104,6 +110,12 @@ async def custom_validation_error_handler(request: Request, exc: RequestValidati
 # Root route
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request, user_id: int | None = Depends(get_current_user_optional)):
+    """
+    Render the home page or redirect to login.
+
+    Checks if the user is authenticated. If authenticated, renders the main dashboard/index 
+    template; otherwise, redirects the user to the login page.
+    """
     # If the user isn't logged in (after token verification with dependency), redirect to /login
     if user_id is None:
         return RedirectResponse(url="/auth/login", status_code=303)

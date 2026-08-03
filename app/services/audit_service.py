@@ -1,3 +1,7 @@
+"""
+All services related to audit logs used across all TicketPlus routes.
+"""
+
 import json
 from datetime import datetime
 

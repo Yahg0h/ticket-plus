@@ -1,3 +1,7 @@
+"""
+All services related to order management used across all TicketPlus routes.
+"""
+
 import uuid
 
 from sqlalchemy import text
@@ -280,7 +284,7 @@ async def process_successful_payment(order_id: int, stripe_payment_id: str) -> b
     order = await get_order_by_id(order_id)
     
     if not order:
-        raise ValueError("Order not found.")
+        raise ValueError("Pedido não encontrado.")
     
     async with engine.connect() as conn:
         # Update payment_status to paid

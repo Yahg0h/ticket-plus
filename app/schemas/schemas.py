@@ -1,3 +1,7 @@
+"""
+All Pydantic schemas and models used in TicketPlus.
+"""
+
 import re
 from datetime import datetime
 from enum import Enum
@@ -132,7 +136,7 @@ class UserLogin(BaseModel):
     @model_validator(mode="after")
     def validate_contact(self) -> "UserLogin":
         if not self.email and not self.phone_number:
-            raise ValueError("Must provide either an email or a phone number to log in.")
+            raise ValueError("Digite um email ou um número de telefone para poder logar.")
 
         return self
 

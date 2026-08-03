@@ -1,3 +1,7 @@
+"""
+Database async connection configuration for TicketPlus + Database status check.
+"""
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -21,6 +25,17 @@ AsyncSessionLocal = async_sessionmaker(
 
 # Dependency function for FastAPI
 async def get_db():
+    """
+    FastAPI dependency that provides an asynchronous database session.
+    Currently not in use, but ready to be if necessary.
+
+    Yields:
+        AsyncSession: An active SQLAlchemy async database session.
+
+    Note:
+        Ensures the session is properly closed after request execution,
+        even if exceptions occur.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session

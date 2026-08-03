@@ -1,3 +1,7 @@
+"""
+Event related routes for TicketPlus.
+"""
+
 from datetime import datetime
 from typing import Annotated
 
@@ -145,7 +149,6 @@ async def post_create_event(
 ):
     """
     Create a new event (requires login).
-    FIXED: Extrai dados manualmente para evitar conflict com Pydantic Form validation.
     """
     
     # Extract all data manually
@@ -155,7 +158,7 @@ async def post_create_event(
     required_fields = ["title", "category", "state", "city", "address", "total_capacity", "start_date", "end_date"]
     for field in required_fields:
         if not form_data.get(field):
-            raise HTTPException(status_code=400, detail=f"Campo obrigatório faltando: {field}")
+            raise HTTPException(status_code=400, detail=f"Bad Request: Campo obrigatório faltando: {field}")
     
     # Extract banner file
     banner_file = form_data.get("banner_file")
@@ -174,12 +177,12 @@ async def post_create_event(
         start_date = datetime.fromisoformat(form_data.get("start_date"))
         end_date = datetime.fromisoformat(form_data.get("end_date"))
     except (ValueError, TypeError):
-        raise HTTPException(status_code=400, detail="Data inválida. Use formato ISO (YYYY-MM-DD HH:MM)")
+        raise HTTPException(status_code=400, detail="Bad Request: Data inválida. Use formato ISO (YYYY-MM-DD HH:MM)")
     
     try:
         total_capacity = int(form_data.get("total_capacity", 0))
     except ValueError:
-        raise HTTPException(status_code=400, detail="Capacidade deve ser um número inteiro")
+        raise HTTPException(status_code=400, detail="Bad Request: Capacidade deve ser um número inteiro")
     
     # Add event to the database
     try:
@@ -224,7 +227,7 @@ async def post_create_event(
     )
     
     # Redirect to event lotes page
-    request.session["flash"] = "Evento criado com sucesso!"
+    request.session["flash"] = "Success: Evento criado com sucesso!"
     return RedirectResponse(url=f"/events/{event_id}/lotes", status_code=303)
 
 
@@ -246,7 +249,7 @@ async def get_event_detail(
 
     # If the event doesn't exist, return 404
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # Fetch ticket types for the event
     ticket_types = await get_ticket_types_by_event(event_id)
@@ -285,7 +288,7 @@ async def get_edit_event(
 
     # Check if exists
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
     
     # Check if user is event organizer, else return 403
     if event["organizer_id"] != user_id:
@@ -314,18 +317,18 @@ async def post_edit_event(
     """
     # Check if event_data is None
     if not event_data:
-        raise HTTPException(status_code=400, detail="Invalid form data.")
+        raise HTTPException(status_code=400, detail="Bad Request: Formato de dados inválido ou não existente..")
 
     # Get current event data first (for audit logs old values)
     old_event_data = await get_event_by_id(event_id)
 
     # Check if the events exists
     if not old_event_data:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # Check if the current user is the event organizer
     if old_event_data['organizer_id'] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to view this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para ver essa página.")
 
     # Extract banner file from form manually
     form_data = await request.form()
@@ -440,7 +443,7 @@ async def post_edit_event(
     # ==== END OF AUDIT LOGS ENTRY ====
 
     # Flash message
-    request.session["flash"] = "Event updated successfully."
+    request.session["flash"] = "Success: Evento atualizado com sucesso."
 
     # Redirect back to event details page
     return RedirectResponse(url=f"/events/{event_id}", status_code=303)
@@ -457,11 +460,11 @@ async def delete_event_route(
 
     # Check if event exists, else 404
     if not event_data:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # Check if the current user is the event organizer
     if event_data["organizer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to perform this action.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não pode realizar essa ação.")
     
     # Delete the event
     try:
@@ -471,7 +474,7 @@ async def delete_event_route(
 
     # If the event couldn't be deleted, return error message (fallback in case except doesn't do it)
     if not is_deleted:
-        raise HTTPException(status_code=400, detail="An error occurred while deleting your event from the database. Please try again later.")
+        raise HTTPException(status_code=400, detail="Um erro ocorreu enquanto deletavamos seu evento do banco de dados. Por favor, tente novamente mais tarde.")
 
     # ==== AUDIT LOGS ENTRY ====
     # Fix datetime dates for start and end date to work well on the audit log
@@ -511,7 +514,7 @@ async def delete_event_route(
         pass
     # ==== END OF AUDIT LOGS ENTRY ====
     # Flash + redirect to /events/my-events
-    request.session["flash"] = "Event deleted successfully."
+    request.session["flash"] = "Success: Evento deletado com sucesso."
 
     return RedirectResponse(url="/events/my-events", status_code=303)
 
@@ -534,11 +537,11 @@ async def get_add_ticket_types(
 
     # If event doesn't exist, return 404
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # If current user isn't the event organizer, return 403
     if event["organizer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to access this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Get ticket_types for this event
     ticket_types = await get_ticket_types_by_event(event_id)
@@ -570,11 +573,11 @@ async def post_add_ticket_type(
 
     # If event doesn't exist, return 404
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # If current user isn't the event organizer, return 403
     if event["organizer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to access this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Add a new ticket type to the database; if a ValueError happens, return 400
     try:
@@ -585,7 +588,7 @@ async def post_add_ticket_type(
             quantity_available=ticket_data.quantity_available
         )
     except ValueError:
-        raise HTTPException(status_code=400, detail="An error occurred during the database event ticket type creation operation. Please check the entered data and try again, or try again later.")
+        raise HTTPException(status_code=400, detail="Um erro ocorreu durante a operação de criação do seu Lote no banco de dados. Por favor, verifique os dados inseridos e tente novamente agora ou mais tarde.")
 
     # ==== AUDIT LOGS ENTRY ====
     # Fetch id of the recently created ticket type
@@ -620,7 +623,7 @@ async def post_add_ticket_type(
     # ==== END OF AUDIT LOGS ENTRY ====
 
     # Flash message
-    request.session["flash"] = "Lote/Ticket Batch successfully added!"
+    request.session["flash"] = "Success: Lote adicionado com sucesso!"
 
     # Redirect to event lotes page
     return RedirectResponse(url=f"/events/{event_id}/lotes", status_code=303)
@@ -640,18 +643,18 @@ async def delete_ticket_type_route(
 
     # If event doesn't exist, return 404
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
 
     # If current user isn't the event organizer, return 403
     if event["organizer_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Access Forbidden: You aren't allowed to access this page.")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Você não possui permissão para acessar essa página.")
 
     # Fetch event ticket_type info
     ticket_type = await get_ticket_type_by_id(ticket_type_id)
 
     # If ticket type doesn't exist, return 404
     if not ticket_type:
-        raise HTTPException(status_code=404, detail="Ticket type not found or doesn't exist.")
+        raise HTTPException(status_code=404, detail="Not Found: Lote não encontrado ou não existe.")
 
     # ==== AUDIT LOGS ENTRY ====
     # Fetch all ticket type data
@@ -688,10 +691,10 @@ async def delete_ticket_type_route(
     try:
         await delete_ticket_type(ticket_type_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Impossible to delete ticket type when tickets have already been sold.")
+        raise HTTPException(status_code=400, detail="Bad Request: Impossível deletar o lote quando ingressos já foram vendidos a partir dele.")
 
     # Flash message
-    request.session["flash"] = "Ticket type successfully deleted."
+    request.session["flash"] = "Success: Lote deletado com sucesso."
 
     # Redirect to events lotes page
     return RedirectResponse(url=f"/events/{event_id}/lotes", status_code=303)
@@ -711,12 +714,12 @@ async def admin_delete_event(
     event = await get_event_by_id(event_id)
     
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado ou não existe.")
     
     # Check if user is admin
     user = await get_user_by_id(user_id)
     if not user or not user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Access Denied: Admin only")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Admins apenas.")
     
     # Delete event by SQL (admin prigillege)
     try:
@@ -742,7 +745,7 @@ async def admin_delete_event(
             user_agent=request.headers.get("user-agent")
         )
         
-        request.session["flash"] = "Evento deletado com sucesso!"
+        request.session["flash"] = "Sucess: Evento deletado com sucesso!"
         request.session["flash_type"] = "success"
         return RedirectResponse(url="/events", status_code=303)
     except Exception as e:

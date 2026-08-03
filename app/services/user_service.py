@@ -1,3 +1,7 @@
+"""
+All services related to user management used across all TicketPlus routes.
+"""
+
 from sqlalchemy import text
 
 from app.database import engine

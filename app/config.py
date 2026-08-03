@@ -1,3 +1,7 @@
+"""
+Enviroment configuration for TicketPlus + templates path definition.
+"""
+
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 from pydantic_settings import BaseSettings, SettingsConfigDict

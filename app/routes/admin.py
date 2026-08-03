@@ -25,7 +25,7 @@ async def verify_admin(
     user = await get_user_by_id(user_id)
     
     if not user or not user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Access Denied: Admin only")
+        raise HTTPException(status_code=403, detail="Access Forbidden: Admins apenas.")
     
     return user_id
  
@@ -172,7 +172,7 @@ async def get_user_edit_page(
     user = await get_user_by_id(user_id_target)
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encontrado.")
     
     return templates.TemplateResponse(
         request,
@@ -197,7 +197,7 @@ async def post_user_edit(
     user = await get_user_by_id(user_id_target)
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encontrado.")
     
     # Get form data
     form_data = await request.form()
@@ -238,7 +238,7 @@ async def post_user_edit(
         user_agent=request.headers.get("user-agent")
     )
     
-    request.session["flash"] = "Usuário atualizado com sucesso!"
+    request.session["flash"] = "Success: Usuário atualizado com sucesso!"
     return RedirectResponse(url=f"/admin/users/{user_id_target}", status_code=303)
  
 # ===== DELETE USER =====
@@ -255,10 +255,10 @@ async def delete_user_route(
     user = await get_user_by_id(user_id_target)
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Not Found: Usuário não encotrado.")
     
     if user_id_target == admin_id:
-        raise HTTPException(status_code=400, detail="Você não pode deletar sua própria conta")
+        raise HTTPException(status_code=400, detail="Bad Request: Você não pode deletar sua própria conta.")
     
     # Check if user has orders
     async with engine.connect() as conn:
@@ -271,7 +271,7 @@ async def delete_user_route(
     if order_count > 0:
         raise HTTPException(
             status_code=400, 
-            detail=f"Não é possível deletar este usuário. Ele possui {order_count} ordem(s) associada(s)."
+            detail=f"Bad Request: Não é possível deletar este usuário. Ele possui {order_count} ordem(s) associada(s)."
         )
     
     # Delete user
@@ -297,7 +297,7 @@ async def delete_user_route(
         user_agent=request.headers.get("user-agent")
     )
     
-    request.session["flash"] = "Usuário deletado com sucesso!"
+    request.session["flash"] = "Success: Usuário deletado com sucesso!"
     return RedirectResponse(url="/admin/users", status_code=303)
  
 # ===== EVENTS =====
@@ -369,12 +369,12 @@ async def admin_delete_event(
         event = event_query.mappings().one_or_none()
     
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise HTTPException(status_code=404, detail="Not Found: Evento não encontrado.")
     
     # Check if user is admin
     user = await get_user_by_id(user_id)
     if not user or not user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Access Denied: Admin only")
+        raise HTTPException(status_code=403, detail="Acesso Negado: Admin only.")
     
     # Connect to database
     try:
@@ -401,7 +401,7 @@ async def admin_delete_event(
             user_agent=request.headers.get("user-agent")
         )
         
-        request.session["flash"] = "Evento deletado com sucesso!"
+        request.session["flash"] = "Success: Evento deletado com sucesso!"
         request.session["flash_type"] = "success"
         return RedirectResponse(url="/events", status_code=303)
     except Exception as e:
