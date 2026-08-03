@@ -6,8 +6,8 @@ from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings, templates
-from app.middleware.csrf import CsrfMiddleware
 from app.middleware.rate_limiter import limiter
+from app.routes.admin import router as admin_router
 from app.routes.auth import router as auth_router
 from app.routes.events import router as events_router
 from app.routes.orders import router as orders_router
@@ -27,8 +27,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Middlewares (CSRF Protection , Jinja2 and Flash messages)
-app.add_middleware(CsrfMiddleware)
+# Middlewares (Jinja2 and Flash messages)
 app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
 
 # Mount and point to the static directory (CSS, JS and images)
@@ -118,3 +117,6 @@ app.include_router(orders_router)
 
 # Tickets router
 app.include_router(tickets_router)
+
+# Admin router
+app.include_router(admin_router)

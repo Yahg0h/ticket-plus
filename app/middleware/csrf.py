@@ -1,62 +1,48 @@
+"""
+CSRF Protection - dependency version.
+Validate token only on routes that need it, without breaking multipart.
+"""
+ 
 import secrets
+from typing import Annotated
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import Response
+from fastapi import Depends, Form, HTTPException, Request
 
 
-class CsrfMiddleware(BaseHTTPMiddleware):
+async def validate_csrf(
+    request: Request,
+    csrf_token: Annotated[str, Form()] = ""
+) -> None:
     """
-    CSRF protection middleware.
-    Generates tokens for GET requests and validates on POST/PUT/DELETE.
+    Dependency to validate CSRF token.
+    Use in POST/PUT/DELETE routes that receive forms.
+
+    Example:
+        @router.post("/create")
+        async def create(request: Request, _=Depends(validate_csrf)):
+        ...
     """
+    # Generate token if it doesn't exist
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
+        request.session.modified = True
     
-    CSRF_TOKEN_LENGTH = 32
-    SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+    expected_token = request.session.get("csrf_token")
     
-    async def dispatch(self, request: Request, call_next):
-        # If it is a safe method (GET, HEAD, OPTIONS)
-        if request.method in self.SAFE_METHODS:
-            # Generate CSRF token if it doesn't exist in session
-            if "csrf_token" not in request.session:
-                request.session["csrf_token"] = secrets.token_urlsafe(self.CSRF_TOKEN_LENGTH)
-                request.session.modified = True
-            return await call_next(request)
-        
-        # If it is POST/PUT/DELETE, validate CSRF token
-        if request.method in {"POST", "PUT", "DELETE"}:
-            token_from_form = None
-            token_from_header = request.headers.get("x-csrf-token")
-            
-            content_type = request.headers.get("content-type", "")
-            
-            if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
-                try:
-                    body = await request.body()
-                    
-                    if "application/x-www-form-urlencoded" in content_type:
-                        params = body.decode().split("&")
-                        for param in params:
-                            if "=" in param:
-                                key, value = param.split("=", 1)
-                                if key == "csrf_token":
-                                    from urllib.parse import unquote_plus
-                                    token_from_form = unquote_plus(value)
-                                    break
-                except Exception as e:
-                    print(f"Error when parse form: {e}")
-            
-            # Validate token
-            expected_token = request.session.get("csrf_token")
-            received_token = token_from_form or token_from_header
-            
-            print(f"Expected: {expected_token}")
-            print(f"Received: {received_token}")
-            
-            if not received_token or received_token != expected_token:
-                return Response(
-                    content="CSRF token validation failed",
-                    status_code=403
-                )
-        
-        return await call_next(request)
+    if not csrf_token or csrf_token != expected_token:
+        raise HTTPException(status_code=403, detail="CSRF token validation failed")
+ 
+ 
+async def ensure_csrf_token(request: Request) -> None:
+    """
+    Dependency to ensure the CSRF token exists in the session.
+    Use on GET routes that serve forms.
+    
+    Example:
+        @router.get("/create")
+        async def get_create(request: Request, _=Depends(ensure_csrf_token)):
+            return templates.TemplateResponse(...)
+    """
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
+        request.session.modified = True

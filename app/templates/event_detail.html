@@ -151,6 +151,30 @@
                     <p class="mb-0 small">Este evento ainda não tem ingressos configurados.</p>
                 </div>
             {% endif %}
+
+            <!-- Zona de Perigo (APENAS PARA ADMINS) -->
+            {% if user['is_admin'] %}
+            <hr class="my-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="text-danger">Zona de Perigo (Admin)</h5>
+                    <p class="text-muted">Esta ação é irreversível e deletará o evento permanentemente.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <form method="POST" action="/events/{{ event.id }}/admin-delete" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        <button 
+                            type="submit" 
+                            class="btn btn-danger"
+                            onclick="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível! Todos os ingressos e ordens serão perdidos.');"
+                        >
+                            Deletar Evento
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            <!-- FIM DA SEÇÃO ADMIN -->
         </div>
     </div>
 </div>

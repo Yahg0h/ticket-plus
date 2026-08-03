@@ -12,10 +12,12 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import ValidationError
 from sqlalchemy import text
 
 from app.config import templates
 from app.database import engine
+from app.middleware.csrf import ensure_csrf_token, validate_csrf
 from app.middleware.rate_limiter import limiter
 from app.schemas.schemas import EventCreate, EventUpdate, TicketTypeCreate
 from app.services.audit_service import (
@@ -24,7 +26,11 @@ from app.services.audit_service import (
     log_action,
     prepare_old_new_values,
 )
-from app.services.auth_service import get_current_user_optional, verify_user_token
+from app.services.auth_service import (
+    get_current_user_optional,
+    get_user_by_id,
+    verify_user_token,
+)
 from app.services.event_service import (
     create_event,
     create_ticket_type,
@@ -113,7 +119,8 @@ async def list_my_events(
 @router.get("/create", response_class=HTMLResponse)
 async def get_create_event(
     request: Request,
-    user_id: int = Depends(verify_user_token)
+    user_id: int = Depends(verify_user_token),
+    _=Depends(ensure_csrf_token)
 ):
     """
     Render event creation form (requires login).
@@ -134,18 +141,25 @@ async def get_create_event(
 async def post_create_event(
     request: Request,
     user_id: int = Depends(verify_user_token),
-    event_data: Annotated[EventCreate, Form()] = None
+    _=Depends(validate_csrf)
 ):
     """
     Create a new event (requires login).
+    FIXED: Extrai dados manualmente para evitar conflict com Pydantic Form validation.
     """
-    if not event_data:
-        raise HTTPException(status_code=400, detail="Invalid form data. Please fill all required fields.")
-
-    # Extract banner file from form manually
+    
+    # Extract all data manually
     form_data = await request.form()
+    
+    # Validate required fields
+    required_fields = ["title", "category", "state", "city", "address", "total_capacity", "start_date", "end_date"]
+    for field in required_fields:
+        if not form_data.get(field):
+            raise HTTPException(status_code=400, detail=f"Campo obrigatório faltando: {field}")
+    
+    # Extract banner file
     banner_file = form_data.get("banner_file")
-
+    
     # Handle banner upload
     banner_url = None
     if banner_file and banner_file.filename:
@@ -153,60 +167,64 @@ async def post_create_event(
             banner_url = await upload_banner_image(banner_file)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-
+    
+    #  Validate datas with Pydantic
+    try:
+        # Parse dates
+        start_date = datetime.fromisoformat(form_data.get("start_date"))
+        end_date = datetime.fromisoformat(form_data.get("end_date"))
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Data inválida. Use formato ISO (YYYY-MM-DD HH:MM)")
+    
+    try:
+        total_capacity = int(form_data.get("total_capacity", 0))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Capacidade deve ser um número inteiro")
+    
     # Add event to the database
     try:
         event_id = await create_event(
             organizer_id=user_id,
-            title=event_data.title,
-            description=event_data.description,
+            title=form_data.get("title"),
+            description=form_data.get("description") or None,
             banner_url=banner_url,
-            category=event_data.category,
-            state=event_data.state,
-            city=event_data.city,
-            address=event_data.address,
-            total_capacity=event_data.total_capacity,
-            start_date=event_data.start_date,
-            end_date=event_data.end_date
+            category=form_data.get("category"),
+            state=form_data.get("state"),
+            city=form_data.get("city"),
+            address=form_data.get("address"),
+            total_capacity=total_capacity,
+            start_date=start_date,
+            end_date=end_date
         )
-    except ValueError:
-        raise HTTPException(status_code=400, detail="An error occurred during the database event creation operation. Please check the entered data and try again, or try again later.")
-
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
     # ==== AUDIT LOGS ENTRY ====
     new_values_dict = {
-        "title": event_data.title,
-        "description": event_data.description,
+        "title": form_data.get("title"),
+        "description": form_data.get("description"),
         "banner_url": banner_url,
-        "category": event_data.category,
-        "state": event_data.state,
-        "city": event_data.city,
-        "address": event_data.address,
-        "total_capacity": event_data.total_capacity,
-        "start_date": event_data.start_date.isoformat() if event_data.start_date else None,
-        "end_date": event_data.end_date.isoformat() if event_data.end_date else None
+        "category": form_data.get("category"),
+        "state": form_data.get("state"),
+        "city": form_data.get("city"),
+        "address": form_data.get("address"),
+        "total_capacity": total_capacity,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat()
     }
-
-    _, new_values_json = prepare_old_new_values(None, new_values_dict)
-
-    try:
-        await log_action(
-            action="create",
-            auditable_type="event",
-            auditable_id=event_id,
-            user_id=user_id,
-            old_values=None,
-            new_values=new_values_json,
-            ip_address=get_ip_from_request(request),
-            user_agent=get_user_agent_from_request(request)
-        )
-    except ValueError:
-        pass
-    # ==== END OF AUDIT LOGS ENTRY ====
-
-    # Flash message
-    request.session["flash"] = "Event created successfully!"
-
-    # Redirect to the event_id lotes (ticket batch) section to configure tickets
+    
+    await log_action(
+        action="create",
+        auditable_type="event",
+        auditable_id=event_id,
+        user_id=user_id,
+        new_values=new_values_dict,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent")
+    )
+    
+    # Redirect to event lotes page
+    request.session["flash"] = "Evento criado com sucesso!"
     return RedirectResponse(url=f"/events/{event_id}/lotes", status_code=303)
 
 
@@ -233,6 +251,9 @@ async def get_event_detail(
     # Fetch ticket types for the event
     ticket_types = await get_ticket_types_by_event(event_id)
 
+    # Get current user credentials
+    user = await get_user_by_id(user_id)
+
     # Render the event_detail.html with all event info
     return templates.TemplateResponse(
         request,
@@ -241,6 +262,7 @@ async def get_event_detail(
             "request": request,
             "event": event,
             "ticket_types": ticket_types,
+            "user": user,
             "user_id": user_id
         }
     )
@@ -673,3 +695,55 @@ async def delete_ticket_type_route(
 
     # Redirect to events lotes page
     return RedirectResponse(url=f"/events/{event_id}/lotes", status_code=303)
+
+# ===== DELETE EVENT (ADMIN ONLY) =====
+ 
+@router.post("/{event_id}/admin-delete", response_class=HTMLResponse)
+async def admin_delete_event(
+    request: Request,
+    event_id: int,
+    user_id: int = Depends(verify_user_token)
+):
+    """
+    Delete an event (admin only) - BYPASS owner check.
+    """
+    # Get event
+    event = await get_event_by_id(event_id)
+    
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check if user is admin
+    user = await get_user_by_id(user_id)
+    if not user or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Access Denied: Admin only")
+    
+    # Delete event by SQL (admin prigillege)
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("DELETE FROM events WHERE id = :event_id"), {"event_id": event_id})
+            await conn.commit()
+        
+        # Convert dict with datetime to dict with strings
+        old_values_audit = dict(event)
+        # Converter todos os datetime para string
+        for key, value in old_values_audit.items():
+            if hasattr(value, 'isoformat'):  # If it is datetime
+                old_values_audit[key] = value.isoformat()
+
+        # Log action
+        await log_action(
+            action="delete",
+            auditable_type="event",
+            auditable_id=event_id,
+            user_id=user_id,
+            old_values=old_values_audit,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent")
+        )
+        
+        request.session["flash"] = "Evento deletado com sucesso!"
+        request.session["flash_type"] = "success"
+        return RedirectResponse(url="/events", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao deletar: {str(e)}")
