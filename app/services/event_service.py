@@ -186,32 +186,24 @@ async def update_event(
     city: str | None = None,
     address: str | None = None,
     total_capacity: int | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None
+    start_date: datetime | None = None,
+    end_date: datetime | None = None
 ) -> bool:
     """
-    Update event data (only by organizer).
-    
-    Args:
-        event_id: Event ID
-        organizer_id: User ID (must be the organizer)
-        Other args: Optional fields to update
-    
-    Returns:
-        bool: True if successful
-    
-    Raises:
-        ValueError: If unauthorized or event not found
+    Update an event (only by organizer).
+    FIXED: Separar detecção de mudança de localização da validação de tempo.
     """
     async with engine.connect() as conn:
-        # Search DB for event to be updated and check organizer credential (organizer_id)
-        query = await conn.execute(text("SELECT * FROM events WHERE id = :event_id AND organizer_id = :organizer_id"), 
-                                   {"event_id": event_id, "organizer_id": organizer_id})
+        # Search DB for event to be updated and check organizer credential
+        query = await conn.execute(
+            text("SELECT * FROM events WHERE id = :event_id AND organizer_id = :organizer_id"), 
+            {"event_id": event_id, "organizer_id": organizer_id}
+        )
         existing_event = query.mappings().one_or_none()
 
         # If not found or organizer_id doesn't match, return ValueError
         if not existing_event:
-            raise ValueError
+            raise ValueError("Event not found or unauthorized")
 
         # Build dynamic query where only the fields which were chosen to be changed get updated
         updates = []
@@ -233,26 +225,39 @@ async def update_event(
             updates.append("category = :category")
             params["category"] = category
 
-        if (state is not None and state) or (city is not None and city):
-            # Verify whether the request for permission to change location prior to the 30-day deadline has been fulfilled.
+        # Verify if state, city or address actually CHANGED from the database values
+        location_changed = False
+
+        if state is not None and state.strip() and state.strip() != existing_event.get("state"):
+            location_changed = True
+
+        if city is not None and city.strip() and city.strip() != existing_event.get("city"):
+            location_changed = True
+
+        if address is not None and address.strip() and address.strip() != existing_event.get("address"):
+            location_changed = True
+
+        # Now validate ONLY if the location has actually changed.
+        if location_changed:
             event_start = existing_event["start_date"]
-            
+
             # Make event_start timezone-aware if it's naive
             if isinstance(event_start, datetime) and not event_start.tzinfo:
                 event_start = event_start.replace(tzinfo=timezone.utc)
-            
+
             days_until_start = (event_start - datetime.now(timezone.utc)).days
 
-            # If it is, return ValueError
             if days_until_start < 30:
                 raise ValueError("Location can only be changed with 30 days in advance.")
-            else:
-                # Else, update the location
-                updates.append("state = :state")
-                params["state"] = state
+        
+        # If the location has changed and passed validation, add it to the updates.
+        if state is not None and state.strip():
+            updates.append("state = :state")
+            params["state"] = state
 
-                updates.append("city = :city")
-                params["city"] = city
+        if city is not None and city.strip():
+            updates.append("city = :city")
+            params["city"] = city
 
         if address:
             updates.append("address = :address")
@@ -260,8 +265,10 @@ async def update_event(
 
         if total_capacity:
             # Check if the new total_capacity is not less than the number of tickets already sold (prevent scams).
-            sold_query = await conn.execute(text("SELECT COALESCE(SUM(quantity_sold), 0) as total_sold FROM ticket_types WHERE event_id = :event_id"), 
-                                            {"event_id": event_id})
+            sold_query = await conn.execute(
+                text("SELECT COALESCE(SUM(quantity_sold), 0) as total_sold FROM ticket_types WHERE event_id = :event_id"), 
+                {"event_id": event_id}
+            )
             total_sold = sold_query.scalar()
 
             # If it is, return ValueError
@@ -309,12 +316,11 @@ async def update_event(
             raise ValueError("New event end date cannot be earlier than the new start_date.")
 
         if not updates:
-            # If there wan't any updates, just return True for what's current registered
+            # If there aren't any updates, just return True
             return True
-        
-        # Base query with all selected updates
+
         query = f"UPDATE events SET {', '.join(updates)} WHERE id = :event_id"
-        
+
         # UPDATE new information into the database
         await conn.execute(text(query), params)
         await conn.commit()
