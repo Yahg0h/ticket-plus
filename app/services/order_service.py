@@ -348,8 +348,16 @@ async def calculate_order_total(ticket_type_id: int, quantity: int) -> int | Non
     # Connect to database
     async with engine.connect() as conn:
         # Search DB for the price of a ticket-type
-        query = await conn.execute(text("SELECT price FROM ticket_types WHERE id = :ticket_type_id"), {"ticket_type_id": ticket_type_id})
+        query = await conn.execute(
+            text("SELECT price FROM ticket_types WHERE id = :ticket_type_id"), 
+            {"ticket_type_id": ticket_type_id}
+        )
         price = query.scalar_one_or_none() # Convert from row to int
+
+        # Return None beforehand if ticket type not found
+        # so it doesn't multiply with quantity and return a TypeError.
+        if price is None:
+            return None
 
         # Calculate the total order amount
         total = price * quantity

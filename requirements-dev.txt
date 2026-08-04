@@ -1,0 +1,24 @@
+# Development & Testing Requirements
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+pytest-xdist
+
+# Linting & Type checking
+ruff
+mypy
+types-aiofiles
+
+# Code formatting
+black
+isort
+
+# Additional testing utilities
+factory-boy
+faker
+
+# Database testing
+testcontainers

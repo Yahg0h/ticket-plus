@@ -1,0 +1,116 @@
+name: CI - Automated Tests
+
+on:
+  push:
+    branches: [ main, develop, "feature/**" ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ticket_plus_test
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_PASSWORD: test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+    
+    steps:
+      # 1. Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 2. Setup Python
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+      
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov ruff mypy aiomysql
+      
+      # 4. Wait MySQL be ready
+      - name: Wait MySQl be ready
+        run: |
+          python -c "
+          import time
+          import asyncio
+          import aiomysql
+          
+          async def wait_for_mysql():
+            for i in range(30):
+              try:
+                conn = await aiomysql.connect(host='127.0.0.1', user='root', password='root')
+                await conn.close()
+                print('✅ MySQL is ready')
+                return
+              except:
+                if i < 29:
+                  print(f'⏳ Trying to connect ({i+1}/30)...')
+                  await asyncio.sleep(1)
+          
+          asyncio.run(wait_for_mysql())
+          "
+      
+      # 5. Create test database
+      - name: Create test database
+        run: |
+          python -c "
+          import pymysql
+          conn = pymysql.connect(host='127.0.0.1', user='root', password='root')
+          cursor = conn.cursor()
+          cursor.execute('CREATE DATABASE IF NOT EXISTS ticket_plus_test')
+          cursor.close()
+          conn.close()
+          print('✅ Test database successfully created)
+          "
+      
+      # 6. Run unit tests
+      - name: Run unit tests
+        run: |
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
+        env:
+          TEST_DATABASE_URL: "mysql+aiomysql://root:root@127.0.0.1/ticket_plus_test"
+      
+      # 7. Upload coverage to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+      
+      # 8. Lint with Ruff
+      - name: Lint with Ruff
+        run: |
+          ruff check app/ tests/ --select=E,W,F --show-source --statistics
+        continue-on-error: true
+      
+      # 9. Type checking with Mypy
+      - name: Type checking with Mypy
+        run: |
+          mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null || true
+        continue-on-error: true
+      
+      # 10. Summary
+      - name: 📊 Test summary
+        if: always()
+        run: |
+          echo "✅ CI pipeline finished!"
+          echo "📌 Verify logs for details"
