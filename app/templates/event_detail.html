@@ -22,33 +22,33 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>📍 Local:</strong></p>
+                            <p><strong><i class="bi bi-geo-alt"></i> Local:</strong></p>
                             <p>{{ event.address }}<br>{{ event.city }}, {{ event.state }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>🗂️ Categoria:</strong></p>
+                            <p><strong><i class="bi bi-folder"></i> Categoria:</strong></p>
                             <p>{{ event.category }}</p>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>📅 Data Início:</strong></p>
+                            <p><strong><i class="bi bi-calendar"></i> Data Início:</strong></p>
                             <p>{{ event.start_date.strftime('%d/%m/%Y às %H:%M') }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>📅 Data Fim:</strong></p>
+                            <p><strong><i class="bi bi-calendar"></i> Data Fim:</strong></p>
                             <p>{{ event.end_date.strftime('%d/%m/%Y às %H:%M') }}</p>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>👥 Capacidade Total:</strong></p>
+                            <p><strong><i class="bi bi-people"></i> Capacidade Total:</strong></p>
                             <p>{{ event.total_capacity }} pessoas</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>🎟️ Ingressos Disponíveis:</strong></p>
+                            <p><strong><i class="bi bi-ticket"></i> Ingressos Disponíveis:</strong></p>
                             <p>{{ event.available_tickets }} ingressos</p>
                         </div>
                     </div>
@@ -60,15 +60,15 @@
         <div class="col-lg-4">
             <div class="card shadow-sm sticky-top">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">ℹ️ Informações do Evento</h5>
+                    <h5 class="card-title mb-3"><i class="bi bi-info-circle"></i> Informações do Evento</h5>
                     
                     {% if event.available_tickets > 0 %}
                         <div class="alert alert-success">
-                            <strong>✅ Ingressos Disponíveis!</strong>
+                            <strong><i class="bi bi-check-circle-fill"></i> Ingressos Disponíveis!</strong>
                         </div>
                     {% else %}
                         <div class="alert alert-danger">
-                            <strong>❌ Evento Lotado</strong>
+                            <strong><i class="bi bi-x-circle-fill"></i> Evento Lotado</strong>
                         </div>
                     {% endif %}
 
@@ -77,12 +77,12 @@
                     </p>
 
                     {% if user_id %}
-                        <a href="#lotes" class="btn btn-primary w-100 mb-2">🎟️ Ver Lotes</a>
+                        <a href="#lotes" class="btn btn-primary w-100 mb-2"><i class="bi bi-ticket"></i> Ver Lotes</a>
                     {% else %}
                         <a href="/auth/login" class="btn btn-primary w-100 mb-2">Entrar para Comprar</a>
                     {% endif %}
 
-                    <a href="/events" class="btn btn-outline-secondary w-100">← Voltar</a>
+                    <a href="/events" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-left"></i> Voltar</a>
                 </div>
             </div>
         </div>
@@ -91,7 +91,7 @@
     <!-- Seção de Lotes/Tipos de Ingresso -->
     <div id="lotes" class="card shadow-sm">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">🎟️ Lotes de Ingressos Disponíveis</h5>
+            <h5 class="mb-0"><i class="bi bi-ticket"></i> Lotes de Ingressos Disponíveis</h5>
         </div>
         <div class="card-body">
             {% if ticket_types %}
@@ -112,13 +112,13 @@
                                     <td>
                                         <strong>
                                             {% if ticket.type == 'standard' %}
-                                                🎫 Ingresso Padrão
+                                                <i class="bi bi-ticket-perforated"></i> Ingresso Padrão
                                             {% elif ticket.type == 'vip' %}
-                                                👑 VIP
+                                                <i class="bi bi-crown"></i> VIP
                                             {% elif ticket.type == 'early_bird' %}
-                                                🐦 Early Bird
+                                                <i class="bi bi-bird"></i> Early Bird
                                             {% elif ticket.type == 'group' %}
-                                                👥 Grupo
+                                                <i class="bi bi-people"></i> Grupo
                                             {% endif %}
                                         </strong>
                                     </td>
@@ -147,7 +147,7 @@
                 </div>
             {% else %}
                 <div class="alert alert-warning">
-                    <strong>⚠️ Nenhum lote disponível</strong>
+                    <strong><i class="bi bi-exclamation-triangle"></i> Nenhum lote disponível</strong>
                     <p class="mb-0 small">Este evento ainda não tem ingressos configurados.</p>
                 </div>
             {% endif %}

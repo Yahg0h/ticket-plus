@@ -7,7 +7,7 @@
     <div class="col-lg-8">
         <!-- Header -->
         <div class="text-center mb-5">
-            <h1 class="mb-2">📝 Dados dos Titulares</h1>
+            <h1 class="mb-2"><i class="bi bi-pencil-square"></i> Dados dos Titulares</h1>
             <p class="text-muted">Preencha os dados de cada ingresso</p>
         </div>
 
@@ -43,7 +43,7 @@
         <!-- Holder Data Collection Form -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <h5 class="card-title mb-4">👥 Informações dos Titulares</h5>
+                <h5 class="card-title mb-4"><i class="bi bi-people"></i> Informações dos Titulares</h5>
                 
                 <form method="POST" action="/tickets/collect/{{ order['id'] }}" id="holderForm">
                     <!-- CSRF Token -->
@@ -53,7 +53,7 @@
                     {% for i in range(1, order["quantity"] + 1) %}
                         <div class="card mb-3 p-3" style="background-color: #f8f9fa;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">🎫 Ingresso #{{ i }}</h6>
+                                <h6 class="mb-0"><i class="bi bi-ticket-perforated"></i> Ingresso #{{ i }}</h6>
                                 <span class="badge bg-secondary">{{ i }} de {{ order["quantity"] }}</span>
                             </div>
 
@@ -94,13 +94,13 @@
 
                     <!-- Info Box -->
                     <div class="alert alert-info small mb-4">
-                        <strong>ℹ️ Importante:</strong> Os dados preenchidos aparecerão no seu ingresso. Verifique se estão corretos antes de confirmar.
+                        <strong><i class="bi bi-info-circle"></i> Importante:</strong> Os dados preenchidos aparecerão no seu ingresso. Verifique se estão corretos antes de confirmar.
                     </div>
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                            Confirmar e Criar Ingressos ✅
+                            Confirmar e Criar Ingressos <i class="bi bi-check-circle-fill"></i>
                         </button>
                     </div>
 
@@ -116,7 +116,7 @@
 
         <!-- Help Section -->
         <div class="alert alert-warning">
-            <h6 class="mb-2">⚠️ Avisos Importantes</h6>
+            <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Avisos Importantes</h6>
             <ul class="mb-0 small">
                 <li>Você precisa preencher <strong>TODOS</strong> os campos para cada ingresso</li>
                 <li>Os dados do CPF devem estar corretos para entrada no evento</li>

@@ -8,10 +8,10 @@
     <div class="mb-5">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
-                <h1>🎟️ Gerenciar Lotes de Ingressos</h1>
+                <h1><i class="bi bi-ticket"></i> Gerenciar Lotes de Ingressos</h1>
                 <h5 class="text-muted">{{ event.title }}</h5>
             </div>
-            <a href="/events/my-events" class="btn btn-outline-secondary">← Voltar</a>
+            <a href="/events/my-events" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
 
         <!-- Resumo do Evento -->
@@ -43,7 +43,7 @@
     {% if ticket_types %}
         <div class="card shadow-sm mb-5">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">📋 Lotes Configurados</h5>
+                <h5 class="mb-0"><i class="bi bi-list"></i> Lotes Configurados</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -64,13 +64,13 @@
                                     <td>
                                         <strong>
                                             {% if ticket.type == 'standard' %}
-                                                🎫 Padrão
+                                                <i class="bi bi-ticket-perforated"></i> Padrão
                                             {% elif ticket.type == 'vip' %}
-                                                👑 VIP
+                                                <i class="bi bi-crown"></i> VIP
                                             {% elif ticket.type == 'early_bird' %}
-                                                🐦 Early Bird
+                                                <i class="bi bi-bird"></i> Early Bird
                                             {% elif ticket.type == 'group' %}
-                                                👥 Grupo
+                                                <i class="bi bi-people"></i> Grupo
                                             {% endif %}
                                         </strong>
                                     </td>
@@ -80,12 +80,12 @@
                                     <td>{{ ticket.quantity_available + ticket.quantity_sold }}</td>
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="/events/{{ event.id }}/lotes/{{ ticket.id }}/editar" class="btn btn-warning" title="Editar">✏️</a>
+                                            <a href="/events/{{ event.id }}/lotes/{{ ticket.id }}/editar" class="btn btn-warning" title="Editar"><i class="bi bi-pencil"></i></a>
                                             <form method="POST" action="/events/{{ event.id }}/lotes/{{ ticket.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este lote?');">
                                                 <!-- CSRF Token -->
                                                 <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
                                                 
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Deletar">🗑️</button>
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Deletar"><i class="bi bi-trash"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -98,7 +98,7 @@
         </div>
     {% else %}
         <div class="alert alert-warning">
-            <h5>⚠️ Nenhum lote configurado</h5>
+            <h5><i class="bi bi-exclamation-triangle"></i> Nenhum lote configurado</h5>
             <p class="mb-0">Adicione lotes abaixo para começar a vender ingressos.</p>
         </div>
     {% endif %}
@@ -106,7 +106,7 @@
     <!-- Formulário para Adicionar Novo Lote -->
     <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
-            <h5 class="mb-0">➕ Adicionar Novo Lote</h5>
+            <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Adicionar Novo Lote</h5>
         </div>
         <div class="card-body">
             <form method="POST" action="/events/{{ event.id }}/lotes">
@@ -120,10 +120,10 @@
                             <label for="type" class="form-label">Tipo de Ingresso *</label>
                             <select class="form-select" id="type" name="type" required>
                                 <option value="">Selecione o tipo</option>
-                                <option value="standard">🎫 Ingresso Padrão</option>
-                                <option value="vip">👑 VIP</option>
-                                <option value="early_bird">🐦 Early Bird</option>
-                                <option value="group">👥 Grupo</option>
+                                <option value="standard"><i class="bi bi-ticket-perforated"></i> Ingresso Padrão</option>
+                                <option value="vip"><i class="bi bi-crown"></i> VIP</option>
+                                <option value="early_bird"><i class="bi bi-bird"></i> Early Bird</option>
+                                <option value="group"><i class="bi bi-people"></i> Grupo</option>
                             </select>
                         </div>
                     </div>
@@ -166,14 +166,14 @@
 
                     <!-- Botão Adicionar -->
                     <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-success w-100">➕ Adicionar Lote</button>
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-circle"></i> Adicionar Lote</button>
                     </div>
                 </div>
 
                 <hr>
 
                 <div class="alert alert-info small">
-                    <strong>💡 Dicas:</strong>
+                    <strong><i class="bi bi-lightbulb"></i> Dicas:</strong>
                     <ul class="mb-0">
                         <li>Você pode criar múltiplos lotes com preços e tipos diferentes</li>
                         <li>A quantidade total de ingressos de todos os lotes não pode exceder a capacidade do evento</li>
@@ -186,7 +186,7 @@
 
     <!-- Voltar -->
     <div class="mt-4 mb-5">
-        <a href="/events/my-events" class="btn btn-outline-secondary">← Voltar aos Meus Eventos</a>
+        <a href="/events/my-events" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar aos Meus Eventos</a>
     </div>
 </div>
 {% endblock %}

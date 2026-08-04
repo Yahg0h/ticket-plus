@@ -153,7 +153,8 @@ async def health_check(request: Request, user_id: int | None = Depends(get_curre
             "service_version": health_dict["service_version"],
             "db_connected": health_dict["db_connected"],
             "checked_at": health_dict["checked_at"],
-            "db_error": health_dict["db_error"]
+            "db_error": health_dict["db_error"],
+            "user_id": user_id
         }
     )
 

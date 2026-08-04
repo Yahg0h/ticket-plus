@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="mb-4">🎫 Explorar Eventos</h1>
+    <h1 class="mb-4"><i class="bi bi-ticket-perforated"></i> Explorar Eventos</h1>
 
     <!-- Filtros de Busca -->
     <div class="card shadow-sm mb-4">
@@ -51,7 +51,7 @@
                 </div>
 
                 <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">🔍 Filtrar</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Filtrar</button>
                 </div>
             </form>
         </div>
@@ -75,10 +75,10 @@
                             <h5 class="card-title">{{ event.title }}</h5>
                             
                             <p class="card-text text-muted small">
-                                <strong>📍</strong> {{ event.city }}, {{ event.state }}<br>
-                                <strong>🗂️</strong> {{ event.category }}<br>
-                                <strong>📅</strong> {{ event.start_date.strftime('%d/%m/%Y %H:%M') }}<br>
-                                <strong>👥</strong> {{ event.available_tickets }} ingressos disponíveis
+                                <strong><i class="bi bi-geo-alt"></i></strong> {{ event.city }}, {{ event.state }}<br>
+                                <strong><i class="bi bi-folder"></i></strong> {{ event.category }}<br>
+                                <strong><i class="bi bi-calendar"></i></strong> {{ event.start_date.strftime('%d/%m/%Y %H:%M') }}<br>
+                                <strong><i class="bi bi-people"></i></strong> {{ event.available_tickets }} ingressos disponíveis
                             </p>
 
                             {% if event.description %}

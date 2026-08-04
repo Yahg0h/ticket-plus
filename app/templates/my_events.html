@@ -5,8 +5,8 @@
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>🎪 Meus Eventos</h1>
-        <a href="/events/create" class="btn btn-success btn-lg">➕ Criar Novo Evento</a>
+        <h1><i class="bi bi-ticket-perforated"></i> Meus Eventos</h1>
+        <a href="/events/create" class="btn btn-success btn-lg"><i class="bi bi-plus-circle"></i> Criar Novo Evento</a>
     </div>
 
     {% if events %}
@@ -26,10 +26,10 @@
                             <h5 class="card-title">{{ event.title }}</h5>
 
                             <p class="card-text text-muted small">
-                                <strong>📍</strong> {{ event.city }}, {{ event.state }}<br>
-                                <strong>🗂️</strong> {{ event.category }}<br>
-                                <strong>📅</strong> {{ event.start_date.strftime('%d/%m/%Y') }}<br>
-                                <strong>👥</strong> {{ event.available_tickets }}/{{ event.total_capacity }} ingressos
+                                <strong><i class="bi bi-geo-alt"></i></strong> {{ event.city }}, {{ event.state }}<br>
+                                <strong><i class="bi bi-folder"></i></strong> {{ event.category }}<br>
+                                <strong><i class="bi bi-calendar"></i></strong> {{ event.start_date.strftime('%d/%m/%Y') }}<br>
+                                <strong><i class="bi bi-people"></i></strong> {{ event.available_tickets }}/{{ event.total_capacity }} ingressos
                             </p>
 
                             {% if event.description %}
@@ -48,14 +48,14 @@
 
                         <div class="card-footer bg-white">
                             <div class="btn-group w-100" role="group">
-                                <a href="/events/{{ event.id }}" class="btn btn-sm btn-info">👁️ Ver</a>
-                                <a href="/events/{{ event.id }}/lotes" class="btn btn-sm btn-primary">🎟️ Lotes</a>
-                                <a href="/events/{{ event.id }}/edit" class="btn btn-sm btn-warning">✏️ Editar</a>
+                                <a href="/events/{{ event.id }}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> Ver</a>
+                                <a href="/events/{{ event.id }}/lotes" class="btn btn-sm btn-primary"><i class="bi bi-ticket"></i> Lotes</a>
+                                <a href="/events/{{ event.id }}/edit" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i> Editar</a>
                                 <form method="POST" action="/events/{{ event.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível!');">
                                     <!-- CSRF Token -->
                                     <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
 
-                                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Deletar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Deletar</button>
                                 </form>
                             </div>
                         </div>
@@ -67,13 +67,13 @@
         <div class="alert alert-info text-center">
             <h5>📭 Você ainda não criou nenhum evento</h5>
             <p class="text-muted mb-3">Comece agora criando seu primeiro evento!</p>
-            <a href="/events/create" class="btn btn-success btn-lg">➕ Criar Evento</a>
+            <a href="/events/create" class="btn btn-success btn-lg"><i class="bi bi-plus-circle"></i> Criar Evento</a>
         </div>
     {% endif %}
 
     <!-- Voltar -->
     <div class="mt-5">
-        <a href="/" class="btn btn-outline-secondary">← Voltar</a>
+        <a href="/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
     </div>
 </div>
 {% endblock %}

@@ -7,7 +7,7 @@
     <div class="col-md-8">
         <div class="card shadow">
             <div class="card-body">
-                <h1 class="card-title mb-4">👤 Meu Perfil</h1>
+                <h1 class="card-title mb-4"><i class="bi bi-person-circle"></i> Meu Perfil</h1>
 
                 <!-- Informações do Usuário -->
                 <div class="row mb-4">
@@ -57,15 +57,15 @@
                 <!-- Status de Admin -->
                 {% if user.is_admin %}
                     <div class="alert alert-info mb-4">
-                        <strong>⭐ Você é um administrador do sistema</strong>
+                        <strong><i class="bi bi-star-fill"></i> Você é um administrador do sistema</strong>
                     </div>
                 {% endif %}
 
                 <!-- Botões de Ação -->
                 <div class="d-flex gap-2">
-                    <a href="/users/profile/edit" class="btn btn-primary">✏️ Editar Perfil</a>
-                    <a href="/users/settings" class="btn btn-secondary">⚙️ Configurações</a>
-                    <a href="/" class="btn btn-outline-secondary">← Voltar</a>
+                    <a href="/users/profile/edit" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar Perfil</a>
+                    <a href="/users/settings" class="btn btn-secondary"><i class="bi bi-gear"></i> Configurações</a>
+                    <a href="/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@
     <div class="col-lg-8">
         <div class="card shadow">
             <div class="card-body">
-                <h1 class="card-title text-center mb-4">🎪 Criar Novo Evento</h1>
+                <h1 class="card-title text-center mb-4"><i class="bi bi-ticket-perforated"></i> Criar Novo Evento</h1>
 
                 <form method="POST" action="/events/create" enctype="multipart/form-data">
                     <!-- CSRF Token -->
@@ -56,14 +56,14 @@
                         <label for="category" class="form-label">Categoria *</label>
                         <select class="form-select" id="category" name="category" required>
                             <option value="">Selecione uma categoria</option>
-                            <option value="entertainment">🎬 Entretenimento</option>
-                            <option value="corporate">🏢 Corporativo</option>
-                            <option value="academic">🎓 Acadêmico</option>
-                            <option value="social">👥 Social</option>
-                            <option value="sports">⚽ Esportes</option>
+                            <option value="entertainment"><i class="bi bi-film"></i> Entretenimento</option>
+                            <option value="corporate"><i class="bi bi-building"></i> Corporativo</option>
+                            <option value="academic"><i class="bi bi-mortarboard"></i> Acadêmico</option>
+                            <option value="social"><i class="bi bi-people"></i> Social</option>
+                            <option value="sports"><i class="bi bi-trophy"></i> Esportes</option>
                             <option value="marketing">📢 Marketing</option>
                             <option value="workshop">🛠️ Workshop</option>
-                            <option value="other">📋 Outro</option>
+                            <option value="other"><i class="bi bi-list"></i> Outro</option>
                         </select>
                     </div>
 
@@ -159,8 +159,8 @@
 
                     <!-- Botões -->
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success btn-lg flex-grow-1">✅ Criar Evento</button>
-                        <a href="/events/my-events" class="btn btn-outline-secondary btn-lg">← Cancelar</a>
+                        <button type="submit" class="btn btn-success btn-lg flex-grow-1"><i class="bi bi-check-circle-fill"></i> Criar Evento</button>
+                        <a href="/events/my-events" class="btn btn-outline-secondary btn-lg"><i class="bi bi-arrow-left"></i> Cancelar</a>
                     </div>
                 </form>
             </div>
