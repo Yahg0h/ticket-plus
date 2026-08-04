@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Banner do Evento -->
+    {% if event.banner_url %}
+        <img src="{{ event.banner_url }}" alt="{{ event.title }}" class="img-fluid rounded mb-4" style="max-height: 400px; object-fit: cover; width: 100%;">
+    {% endif %}
+
+    <div class="row mb-5">
+        <!-- Informações do Evento -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="card-title mb-3">{{ event.title }}</h1>
+
+                    <p class="lead">{{ event.description or "Sem descrição disponível" }}</p>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-geo-alt"></i> Local:</strong></p>
+                            <p>{{ event.address }}<br>{{ event.city }}, {{ event.state }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-folder"></i> Categoria:</strong></p>
+                            <p>{{ event.category }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-calendar"></i> Data Início:</strong></p>
+                            <p>{{ event.start_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-calendar"></i> Data Fim:</strong></p>
+                            <p>{{ event.end_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-people"></i> Capacidade Total:</strong></p>
+                            <p>{{ event.total_capacity }} pessoas</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-ticket"></i> Ingressos Disponíveis:</strong></p>
+                            <p>{{ event.available_tickets }} ingressos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Organizer Info -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-info-circle"></i> Informações do Evento</h5>
+                    
+                    {% if event.available_tickets > 0 %}
+                        <div class="alert alert-success">
+                            <strong><i class="bi bi-check-circle-fill"></i> Ingressos Disponíveis!</strong>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <strong><i class="bi bi-x-circle-fill"></i> Evento Lotado</strong>
+                        </div>
+                    {% endif %}
+
+                    <p class="text-muted small">
+                        Evento criado em {{ event.created_at.strftime('%d/%m/%Y') }}
+                    </p>
+
+                    {% if user_id %}
+                        <a href="#lotes" class="btn btn-primary w-100 mb-2"><i class="bi bi-ticket"></i> Ver Lotes</a>
+                    {% else %}
+                        <a href="/auth/login" class="btn btn-primary w-100 mb-2">Entrar para Comprar</a>
+                    {% endif %}
+
+                    <a href="/events" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-left"></i> Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Lotes/Tipos de Ingresso -->
+    <div id="lotes" class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-ticket"></i> Lotes de Ingressos Disponíveis</h5>
+        </div>
+        <div class="card-body">
+            {% if ticket_types %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo de Ingresso</th>
+                                <th>Preço</th>
+                                <th>Disponíveis</th>
+                                <th>Vendidos</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in ticket_types %}
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            {% if ticket.type == 'standard' %}
+                                                <i class="bi bi-ticket-perforated"></i> Ingresso Padrão
+                                            {% elif ticket.type == 'vip' %}
+                                                <i class="bi bi-crown"></i> VIP
+                                            {% elif ticket.type == 'early_bird' %}
+                                                <i class="bi bi-bird"></i> Early Bird
+                                            {% elif ticket.type == 'group' %}
+                                                <i class="bi bi-people"></i> Grupo
+                                            {% endif %}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        R$ {{ "%.2f"|format(ticket.price / 100) }}
+                                    </td>
+                                    <td>
+                                        {{ ticket.quantity_available }}
+                                    </td>
+                                    <td>
+                                        {{ ticket.quantity_sold }}
+                                    </td>
+                                    <td>
+                                        {% if ticket.quantity_available > 0 and user_id %}
+                                            <a href="/checkout/{{ ticket.id }}" class="btn btn-sm btn-success">Comprar</a>
+                                        {% elif ticket.quantity_available > 0 %}
+                                            <a href="/auth/login" class="btn btn-sm btn-success">Comprar</a>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-secondary" disabled>Esgotado</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <strong><i class="bi bi-exclamation-triangle"></i> Nenhum lote disponível</strong>
+                    <p class="mb-0 small">Este evento ainda não tem ingressos configurados.</p>
+                </div>
+            {% endif %}
+
+            <!-- Zona de Perigo (APENAS PARA ADMINS) -->
+            {% if user['is_admin'] %}
+            <hr class="my-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="text-danger">Zona de Perigo (Admin)</h5>
+                    <p class="text-muted">Esta ação é irreversível e deletará o evento permanentemente.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <form method="POST" action="/events/{{ event.id }}/admin-delete" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        <button 
+                            type="submit" 
+                            class="btn btn-danger"
+                            onclick="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível! Todos os ingressos e ordens serão perdidos.');"
+                        >
+                            Deletar Evento
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            <!-- FIM DA SEÇÃO ADMIN -->
+        </div>
+    </div>
+</div>
+{% endblock %}

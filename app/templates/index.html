@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Home - TicketPlus{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section bg-light py-5 mb-5 rounded">
+    <div class="container text-center">
+        <h1 class="display-4 mb-3"><i class="bi bi-ticket-perforated"></i> Bem-vindo ao TicketPlus!</h1>
+        <p class="lead text-muted mb-4">Compre ingressos para seus eventos favoritos ou crie seu próprio evento</p>
+        
+        {% if user_id %}
+            <!-- User is logged in -->
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <a href="/events" class="btn btn-primary btn-lg">Explorar Eventos</a>
+                <a href="/tickets" class="btn btn-info btn-lg">Meus Ingressos</a>
+                <a href="/events/my-events" class="btn btn-success btn-lg">Meus Eventos</a>
+            </div>
+        {% else %}
+            <!-- User is not logged in -->
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <a href="/events" class="btn btn-primary btn-lg">Explorar Eventos</a>
+                <a href="/auth/login" class="btn btn-outline-primary btn-lg">Entrar</a>
+                <a href="/auth/register" class="btn btn-success btn-lg">Criar Conta</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recursos Principais -->
+<div class="container">
+    <h2 class="mb-5 text-center">✨ Por que escolher TicketPlus?</h2>
+    
+    <div class="row g-4 mb-5">
+        <!-- Card 1 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <h3 class="card-title mb-3"><i class="bi bi-film"></i> Eventos Diversos</h3>
+                    <p class="card-text">Encontre ingressos para shows, teatro, esportes, workshops e muito mais.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <h3 class="card-title mb-3"><i class="bi bi-credit-card"></i> Pagamento Seguro</h3>
+                    <p class="card-text">Processamos pagamentos de forma segura com a melhor tecnologia.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <h3 class="card-title mb-3"><i class="bi bi-phone"></i> Gerenciamento Fácil</h3>
+                    <p class="card-text">Organize seus ingressos e eventos em um único lugar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA para organizar evento -->
+    {% if user_id %}
+        <div class="alert alert-info text-center mb-5">
+            <h4><i class="bi bi-ticket-perforated"></i> Quer organizar um evento?</h4>
+            <p class="mb-3">Crie seu próprio evento e comece a vender ingressos hoje mesmo!</p>
+            <a href="/events/create" class="btn btn-info btn-lg">Criar Novo Evento</a>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center mb-5">
+            <h4><i class="bi bi-ticket-perforated"></i> Quer organizar um evento?</h4>
+            <p class="mb-3">Faça login ou crie uma conta para começar a organizar seus eventos!</p>
+            <a href="/auth/register" class="btn btn-warning btn-lg">Criar Conta Agora</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="display-5">Editar Usuário</h1>
+                <p class="text-muted">ID: {{ user.id }}</p>
+            </div>
+
+            <!-- Alert Flash -->
+            {% if request.session.get('flash') %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ request.session.pop('flash') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <!-- Form de Edição -->
+            <form method="POST" action="/admin/users/{{ user.id }}" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
+                <!-- Nome -->
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nome *</label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="name" 
+                        name="name" 
+                        value="{{ user.name }}"
+                        maxlength="255"
+                        disabled
+                    >
+                </div>
+
+                <!-- Email (Read-Only) -->
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email (não editável)</label>
+                    <input 
+                        type="email" 
+                        class="form-control" 
+                        id="email" 
+                        value="{{ user.email }}"
+                        disabled
+                    >
+                </div>
+
+                <!-- Telefone (Read-Only) -->
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Telefone (não editável)</label>
+                    <input 
+                        type="tel" 
+                        class="form-control" 
+                        id="phone" 
+                        value="{{ user.phone_number }}"
+                        disabled
+                    >
+                </div>
+
+                <!-- Admin Toggle -->
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="is_admin" 
+                            name="is_admin"
+                            value="true"
+                            {% if user.is_admin %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="is_admin">
+                            É Administrador
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">Marque para dar acesso ao painel admin</small>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-between mb-4">
+                    <a href="/admin/users" class="btn btn-secondary">Voltar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+
+            <!-- Zona de Perigo -->
+            <hr class="my-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="text-danger">Zona de Perigo</h5>
+                    <p class="text-muted">Esta ação é irreversível e deletará a conta permanentemente.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <form method="POST" action="/admin/users/{{ user.id }}/delete" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        <button 
+                            type="submit" 
+                            class="btn btn-danger"
+                            onclick="return confirm('Tem certeza que deseja deletar esta conta? Esta ação é irreversível!');"
+                        >
+                            Deletar Conta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

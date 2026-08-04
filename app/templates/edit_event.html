@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Evento - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="display-5">Editar Evento</h1>
+                <p class="text-muted">Atualize as informações do seu evento abaixo</p>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" action="/events/{{ event.id }}/edit" class="needs-validation" novalidate enctype="multipart/form-data">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+
+                <!-- Título -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título do Evento *</label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="title" 
+                        name="title" 
+                        value="{{ event.title }}"
+                        maxlength="255"
+                        placeholder="Ex: Conferência de Tecnologia 2026"
+                    >
+                    <small class="form-text text-muted">Nome do seu evento</small>
+                </div>
+
+                <!-- Descrição -->
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descrição</label>
+                    <textarea 
+                        class="form-control" 
+                        id="description" 
+                        name="description" 
+                        rows="4"
+                        placeholder="Descreva seu evento em detalhes..."
+                    >{{ event.description or '' }}</textarea>
+                    <small class="form-text text-muted">Informações sobre o evento, programação, etc.</small>
+                </div>
+
+                <!-- Banner URL -->
+                <div class="mb-3">
+                    <label for="banner_url" class="form-label">URL da Imagem (Banner)</label>
+                    <input 
+                        type="file" 
+                        class="form-control" 
+                        id="banner_file" 
+                        name="banner_file" 
+                        accept=".jpg,.jpeg,.png,.webp"
+                    >
+                    <small class="form-text text-muted">Máximo 5MB. Formatos: JPG, PNG, WebP</small>
+                </div>
+
+                <!-- Categoria -->
+                <div class="mb-3">
+                    <label for="category" class="form-label">Categoria *</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">-- Selecione uma categoria --</option>
+                        <option value="entertainment" {% if event.category == 'entertainment' %}selected{% endif %}>Entretenimento</option>
+                        <option value="corporate" {% if event.category == 'corporate' %}selected{% endif %}>Corporativo</option>
+                        <option value="academic" {% if event.category == 'academic' %}selected{% endif %}>Acadêmico</option>
+                        <option value="social" {% if event.category == 'social' %}selected{% endif %}>Social</option>
+                        <option value="sports" {% if event.category == 'sports' %}selected{% endif %}>Esportes</option>
+                        <option value="marketing" {% if event.category == 'marketing' %}selected{% endif %}>Marketing</option>
+                        <option value="workshop" {% if event.category == 'workshop' %}selected{% endif %}>Workshop</option>
+                        <option value="other" {% if event.category == 'other' %}selected{% endif %}>Outro</option>
+                    </select>
+                </div>
+
+                <!-- Localização: Estado e Cidade -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="state" class="form-label">Estado *</label>
+                        <select class="form-select" id="state" name="state">
+                            <option value="">-- Selecione um estado --</option>
+                        </select>
+                        <small class="form-text text-muted">UF do evento</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="city" class="form-label">Cidade *</label>
+                        <select class="form-select" id="city" name="city">
+                            <option value="">-- Selecione uma cidade --</option>
+                        </select>
+                        <small class="form-text text-muted">Município do evento</small>
+                    </div>
+                </div>
+
+                <!-- Endereço -->
+                <div class="mb-3">
+                    <label for="address" class="form-label">Endereço *</label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="address" 
+                        name="address" 
+                        value="{{ event.address }}"
+                        maxlength="255"
+                        placeholder="Rua, número, bairro, complemento"
+                    >
+                    <small class="form-text text-muted">Localização completa do evento</small>
+                </div>
+
+                <!-- Capacidade Total -->
+                <div class="mb-3">
+                    <label for="total_capacity" class="form-label">Capacidade Total *</label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="total_capacity" 
+                        name="total_capacity" 
+                        value="{{ event.total_capacity }}"
+                        min="1"
+                        placeholder="500"
+                        required
+                    >
+                    <small class="form-text text-muted">Número máximo de pessoas. Não pode ser menor que ingressos já vendidos.</small>
+                </div>
+
+                <!-- Data de Início -->
+                <div class="mb-3">
+                    <label for="start_date" class="form-label">Data e Hora de Início *</label>
+                    <input 
+                        type="datetime-local" 
+                        class="form-control" 
+                        id="start_date" 
+                        name="start_date" 
+                        value="{{ event.start_date.strftime('%Y-%m-%dT%H:%M') if event.start_date else '' }}"
+                        required
+                    >
+                    <small class="form-text text-muted">Quando o evento começa</small>
+                </div>
+
+                <!-- Data de Fim -->
+                <div class="mb-3">
+                    <label for="end_date" class="form-label">Data e Hora de Término *</label>
+                    <input 
+                        type="datetime-local" 
+                        class="form-control" 
+                        id="end_date" 
+                        name="end_date" 
+                        value="{{ event.end_date.strftime('%Y-%m-%dT%H:%M') if event.end_date else '' }}"
+                        required
+                    >
+                    <small class="form-text text-muted">Quando o evento termina</small>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                    <a href="/events/{{ event.id }}" class="btn btn-secondary btn-lg">Cancelar</a>
+                    <button type="submit" class="btn btn-primary btn-lg">Salvar Alterações</button>
+                </div>
+
+                <!-- Nota de Restrições -->
+                <div class="alert alert-info" role="alert">
+                    <strong>Atenção:</strong> A localização (estado e cidade) só pode ser alterada com 30+ dias de antecedência do evento.
+                </div>
+
+            </form>
+
+            <!-- Seção de Perigo (Delete) -->
+            <hr class="my-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>Zona de Perigo</h4>
+                    <p class="text-muted">Esta ação é irreversível e deletará o evento permanentemente.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <form method="POST" action="/events/{{ event.id }}/delete" style="display: inline;">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                        
+                        <button 
+                            type="submit" 
+                            class="btn btn-danger btn-lg"
+                            onclick="return confirm('Tem certeza que deseja deletar este evento? Esta ação é irreversível!');"
+                        >
+                            Deletar Evento
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Script para carregar estados e cidades dinamicamente -->
+<script>
+    // Função para carregar dados do Brasil
+    async function loadBrazilData() {
+        try {
+            const response = await fetch('/static/brazil-states-cities.json');
+            const data = await response.json();
+            return data.BR.states;
+        } catch (error) {
+            console.error('Erro ao carregar dados do Brasil:', error);
+            return {};
+        }
+    }
+
+    // Função para popular estados
+    async function populateStates() {
+        const brazilStates = await loadBrazilData();
+        const stateSelect = document.getElementById('state');
+        const currentState = "{{ event.state }}";
+
+        for (const [stateCode, stateData] of Object.entries(brazilStates)) {
+            const option = document.createElement('option');
+            option.value = stateCode;
+            option.textContent = stateData.name;
+            if (stateCode === currentState) {
+                option.selected = true;
+            }
+            stateSelect.appendChild(option);
+        }
+
+        // Se houver estado selecionado, carrega cidades
+        if (currentState) {
+            await populateCities(currentState);
+        }
+    }
+
+    // Função para popular cidades baseado no estado
+    async function populateCities(stateCode) {
+        const brazilStates = await loadBrazilData();
+        const citySelect = document.getElementById('city');
+        const currentCity = "{{ event.city }}";
+
+        // Limpa as cidades anteriores
+        citySelect.innerHTML = '<option value="">-- Selecione uma cidade --</option>';
+
+        if (brazilStates[stateCode]) {
+            const cities = brazilStates[stateCode].cities;
+            for (const city of cities) {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                if (city === currentCity) {
+                    option.selected = true;
+                }
+                citySelect.appendChild(option);
+            }
+        }
+    }
+
+    // Event listener para mudança de estado
+    document.getElementById('state').addEventListener('change', (e) => {
+        populateCities(e.target.value);
+    });
+
+    // Carrega estados ao inicializar a página
+    document.addEventListener('DOMContentLoaded', populateStates);
+</script>
+
+{% endblock %}

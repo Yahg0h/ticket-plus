@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}About - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3"><i class="bi bi-ticket-perforated"></i> Sobre o TicketPlus</h1>
+            <p class="lead text-muted">Uma plataforma de e-commerce de código aberto para venda de ingressos para eventos</p>
+        </div>
+    </div>
+
+    <!-- Mission Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">
+                        <i class="bi bi-target"></i> Missão
+                    </h2>
+                    <p class="card-text">
+                        O TicketPlus foi criado como um projeto de aprendizado para compreender a arquitetura MVC e como trabalhar com aplicações de maior escala organizadas em pastas e módulos. 
+                        Ele serviu para mim como uma exploração prática da integração de APIs externas, da implementação de melhores práticas de desenvolvimento backend e da criação de algo realmente útil, 
+                        ainda que simples quando comparado a outras plataformas de produção já existentes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vision Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">
+                        <i class="bi bi-eye"></i> Visão
+                    </h2>
+                    <p class="card-text">
+                        O TicketPlus é, no fim das coisas, um projeto de aprendizado, e não uma plataforma comercial. No entanto, eu continuarei a atualizar e a melhorá-lo sempre que o tempo permitir. 
+                        A base de código dele foi projetada para ser modular e extensível, permitindo que qualquer pessoa faça um fork, modifique e adapte o projeto para seus próprios usos.
+                        Seja como um projeto pessoal, um recurso de aprendizado ou a base para algo maior.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Important Note -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                <strong>Projeto Aberto:</strong> Novamente, o TicketPlus não é um produto comercial, é um projeto de aprendizado. Sinta-se à vontade para fazer um fork dele, modificá-lo, alterar sua marca e aparência e até o backend se necessário.
+                Seja mudando ele de nome para "Venda+", "EventHub" ou qualquer outro nome ou adicionar coisas novas que você quer para seu uso dele, você tem total liberdade para isso. O único requisito é respeitar a Licença MIT.
+            </div>
+        </div>
+    </div>
+
+    <!-- Technology Stack Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-stack"></i> Technology Stack
+            </h2>
+        </div>
+        
+        <!-- Backend -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-server"></i> Backend
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Python 3.14</strong> — Runtime</li>
+                        <li class="mb-2"><strong>FastAPI</strong> — Framework web</li>
+                        <li class="mb-2"><strong>SQLAlchemy Core</strong> — Abstração de banco de dados</li>
+                        <li class="mb-2"><strong>MySQL 8.0</strong> — Banco de Dados</li>
+                        <li class="mb-2"><strong>Uvicorn</strong> — Servidor ASGI</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frontend -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-browser-chrome"></i> Frontend
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Jinja2</strong> — Template engine</li>
+                        <li class="mb-2"><strong>Bootstrap 5</strong> — Framework de CSS</li>
+                        <li class="mb-2"><strong>JavaScript</strong> — Interatividade do lado do Client</li>
+                        <li class="mb-2"><strong>Bootstrap Icons</strong> — ícones</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication & Security -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-shield-lock"></i> Autenticação & Segurança
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>JWT</strong> — Autenticação baseada em tokens</li>
+                        <li class="mb-2"><strong>Argon2</strong> — Password hashing</li>
+                        <li class="mb-2"><strong>CSRF Protection</strong> — Sessão baseada em Tokens</li>
+                        <li class="mb-2"><strong>Rate Limiting</strong> — slowapi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- External Services -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-cloud"></i> Serviços Externos
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Stripe</strong> — Processamento de pagamento</li>
+                        <li class="mb-2"><strong>Pillow</strong> — Manipulação de imagens</li>
+                        <li class="mb-2"><strong>ReportLab</strong> — Geração de PDFs</li>
+                        <li class="mb-2"><strong>qrcode</strong> — Geração de QR Codes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- DevOps & Tools -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-gear"></i> DevOps & Tools
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Docker</strong> — Conteinerização</li>
+                        <li class="mb-2"><strong>GitHub Actions</strong> — CI/CD</li>
+                        <li class="mb-2"><strong>Pydantic</strong> — Validação de dados</li>
+                        <li class="mb-2"><strong>python-dotenv</strong> — Configurações do ambiente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data & Validation -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-check-circle"></i> Dados & Validação
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>validate-docbr</strong> — Validação de documentos Brasileiros</li>
+                        <li class="mb-2"><strong>PyJWT</strong> — Codificação e decodificação de JWT</li>
+                        <li class="mb-2"><strong>aiofiles</strong> — Operações de arquivo assíncronoss</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Links Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-link-45deg"></i> Links & Recursos
+            </h2>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-github" style="font-size: 2rem; color: #333;"></i>
+                    </h5>
+                    <p class="card-text">GitHub Repository</p>
+                    <a href="https://github.com/Yahg0h/ticket-plus" class="btn btn-outline-dark btn-sm" target="_blank">
+                        Visite o Repositório
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!--<div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-linkedin" style="font-size: 2rem; color: #0077b5;"></i>
+                    </h5>
+                    <p class="card-text">LinkedIn Profile</p>
+                    <a href="https://linkedin.com/in/placeholder" class="btn btn-outline-primary btn-sm" target="_blank">
+                        Visit Profile
+                    </a>
+                </div>
+            </div>
+        </div>-->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-globe" style="font-size: 2rem; color: #0066cc;"></i>
+                    </h5>
+                    <p class="card-text">Portfolio/Website</p>
+                    <a href="https://yahg0h.github.io/" class="btn btn-outline-info btn-sm" target="_blank">
+                        Visite o meu Portfólio
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!--<div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-envelope" style="font-size: 2rem; color: #ea4335;"></i>
+                    </h5>
+                    <p class="card-text">Email Contact</p>
+                    <a href="mailto:your.email@example.com" class="btn btn-outline-danger btn-sm">
+                        Send Email
+                    </a>
+                </div>
+            </div>
+        </div>-->
+    </div>
+
+    <!-- License Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">
+                        <i class="bi bi-file-text"></i> Licença
+                    </h2>
+                    <p class="mb-3">
+                        <strong>MIT License</strong>
+                    </p>
+                    <p class="text-muted mb-3">
+                        Copyright (c) 2026 Yahg0h
+                    </p>
+                    <p class="text-muted mb-3">
+                        Permission is hereby granted, free of charge, to any person obtaining a copy
+                        of this software and associated documentation files (the "Software"), to deal
+                        in the Software without restriction, including without limitation the rights
+                        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                        copies of the Software, and to permit persons to whom the Software is
+                        furnished to do so, subject to the following conditions:
+                    </p>
+                    <p class="text-muted small">
+                        The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+                    </p>
+                    <p class="text-muted small mb-0">
+                        Para o texto completo da licença, visite: <a href="https://opensource.org/licenses/MIT" target="_blank">opensource.org/licenses/MIT</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credits Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">
+                        <i class="bi bi-hand-thumbs-up"></i> Créditos
+                    </h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="mb-3">Desenvolvido por</h5>
+                            <p class="mb-0">Esse projeto foi desenvolvidor por mim (Yahg0h) como uma iniciativa de aprendizado pessoal.</p>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h5 class="mb-3">Agradecimentos especiais</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Stripe</strong> — Por fornecer uma API robusta de processamento de pagamentos
+                                </li>
+                                <li>
+                                    <strong>validate-docbr</strong> — Para validação de documentos brasileiros
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <p class="text-muted mb-0">
+                        <small>
+                            O TicketPlus é um projeto de código aberto. Se você o achou útil, legal ou o utilizou em seu próprio projeto, 
+                            considere dar uma <i class="bi bi-star-fill"></i> no GitHub!
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row">
+        <div class="col-12 text-center">
+            <h3 class="mb-4">Pronto para começar?</h3>
+            <a href="/events" class="btn btn-primary btn-lg">Explore os Eventos</a>
+            <a href="https://github.com/Yahg0h/ticket-plus" class="btn btn-outline-secondary btn-lg ms-2" target="_blank">Veja no GitHub</a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .btn {
+        transition: all 0.2s ease;
+    }
+</style>
+
+{% endblock %}

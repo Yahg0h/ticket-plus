@@ -1,0 +1,379 @@
+"""
+All Pydantic schemas and models used in TicketPlus.
+"""
+
+import re
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from validate_docbr import CPF
+
+# ==========================================
+# 1. Regex Constants (Validations)
+# ==========================================
+# Accepts formated CPF (000.000.000-00) or numbers only (00000000000)
+CPF_REGEX = r"^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$"
+
+def validate_cpf(cpf_string: str) -> bool:
+    """
+    Validate a CPF using a check digit algorithm.
+    Accepts formated or numbers only.
+    """
+    if not cpf_string:
+        return False
+
+    # Remove formatting (dots and -)
+    cpf_clean = cpf_string.replace(".", "").replace("-", "")
+
+    # Validate cpf using validate-docbr, then return
+    validador = CPF()
+    return validador.validate(cpf_clean)
+
+# Accepts formated Brazilian phone numbers (with or without DDD, with or without +55)
+# Ex: (11) 99999-9999, 11999999999, +5511999999999
+PHONE_REGEX = r"^(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9?\d{4})-?\d{4}$"
+
+# Accepts formatted email addresses (e.g., user@domain.com)
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+# Accepts IPv4 and IPv6
+IP_REGEX = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
+
+
+# ==========================================
+# 2. ENUMS
+# ==========================================
+class EventCategory(str, Enum):
+    ENTERTAINMENT = "entertainment"
+    CORPORATE = "corporate"
+    ACADEMIC = "academic"
+    SOCIAL = "social"
+    SPORTS = "sports"
+    MARKETING = "marketing"
+    WORKSHOP = "workshop"
+    OTHER = "other"
+
+
+class TicketType(str, Enum):
+    STANDARD = "standard"
+    VIP = "vip"
+    EARLY_BIRD = "early_bird"
+    GROUP = "group"
+
+
+class PaymentStatus(str, Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+
+
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
+
+
+class TicketStatus(str, Enum):
+    VALID = "valid"
+    USED = "used"
+    CANCELLED = "cancelled"
+
+
+# ==========================================
+# 3. USER SCHEMAS
+# ==========================================
+class UserBase(BaseModel):
+    name: str = Field(..., max_length=255)
+    email: str | None = None
+    phone_number: str | None = Field(default=None, max_length=20)
+    cpf: str = Field(..., pattern=CPF_REGEX, max_length=14)
+    state: str = Field(..., max_length=255)
+    city: str = Field(..., max_length=255)
+
+    @model_validator(mode="after")
+    def validate_contact(self) -> "UserBase":
+        if not self.email and not self.phone_number:
+            raise ValueError("Deve fornecer email ou telefone.")
+        
+        # Validate email only if provided
+        if self.email:
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, self.email):
+                raise ValueError("Formato de email inválido.")
+        
+        # Validate phone only if provided
+        if self.phone_number and not re.match(PHONE_REGEX, self.phone_number):
+                raise ValueError("Formato de telefone inválido.")
+        
+        return self
+
+
+class UserCreate(UserBase):
+    """Scheme to create a user (POST)"""
+    password: str = Field(..., min_length=6, max_length=255)
+
+    @field_validator("cpf")
+    @classmethod
+    def validate_cpf_field(cls, v: str) -> str:
+        if not validate_cpf(v):
+            raise ValueError("CPF inválido. Verifique o número e tente novamente.")
+
+        # Else, clean the CPF for formated (dots and -)
+        cpf_clean = v.replace(".", "").replace("-", "")
+        return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-{cpf_clean[9:11]}"
+
+
+class UserLogin(BaseModel):
+    """Schema to authenticate a user during login"""
+    email: str | None
+    phone_number: str | None = Field(default=None, pattern=PHONE_REGEX, max_length=20)
+    password: str
+
+    @model_validator(mode="after")
+    def validate_contact(self) -> "UserLogin":
+        if not self.email and not self.phone_number:
+            raise ValueError("Digite um email ou um número de telefone para poder logar.")
+
+        return self
+
+class UserUpdate(BaseModel):
+    """Schema for updating user data (PUT)"""
+    name: str | None = Field(default=None, max_length=255)
+    email: str | None = None
+    phone_number: str | None = Field(default=None, max_length=20)
+    state: str | None = Field(default=None, max_length=255)
+    city: str | None = Field(default=None, max_length=255)
+    password: str | None = Field(default=None, max_length=255)
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_fields(self) -> "UserUpdate":
+        """Validate optional fields only if provided"""
+        
+        # Validate email only if provided
+        if self.email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, self.email):
+                raise ValueError("Formato de email inválido.")
+        
+        # Validate phone only if provided
+        if self.phone_number:
+            import re
+            PHONE_REGEX = r"^(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9?\d{4})-?\d{4}$"
+            if not re.match(PHONE_REGEX, self.phone_number):
+                raise ValueError("Formato de telefone inválido.")
+        
+        # Validate password only if provided
+        if self.password and len(self.password) < 6:
+                raise ValueError("Senha deve ter no mínimo 6 caracteres.")
+        
+        return self
+
+
+class UserResponse(UserBase):
+    """Schema for returning user data (GET)"""
+    id: int
+    is_admin: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 4. EVENT SCHEMAS
+# ==========================================
+class EventBase(BaseModel):
+    title: str = Field(..., max_length=255)
+    description: str | None = None
+    banner_url: str | None = Field(default=None, max_length=255)
+    category: EventCategory
+    state: str = Field(..., max_length=255)
+    city: str = Field(..., max_length=255)
+    address: str = Field(..., max_length=255)
+    total_capacity: int = Field(..., gt=0)
+    start_date: datetime
+    end_date: datetime
+
+
+class EventCreate(EventBase):
+    """Schema for registering an event (POST)"""
+
+
+class EventUpdate(BaseModel):
+    """Schema for updating event data (PUT)"""
+    title: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    banner_url: str | None = Field(default=None, max_length=255)
+    category: EventCategory | None = None
+    state: str | None = Field(default=None, max_length=255)
+    city: str | None = Field(default=None, max_length=255)
+    address: str | None = Field(default=None, max_length=255)
+    total_capacity: int | None = Field(default=None, gt=0)
+    available_tickets: int | None = Field(default=None, ge=0)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventResponse(EventBase):
+    """Schema for returning a event data (GET)"""
+    id: int
+    organizer_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 5. TICKET TYPE SCHEMAS (ticket Batch)
+# ==========================================
+class TicketTypeBase(BaseModel):
+    type: TicketType
+    price: int = Field(..., ge=0, description="Price in cents (e.g., 10000 = R$ 100,00)")
+    quantity_available: int = Field(..., ge=0)
+
+
+class TicketTypeCreate(TicketTypeBase):
+    """Schema for registering an event ticket type"""
+
+
+class TicketTypeUpdate(BaseModel):
+    """Schema to update ticket type details (e.g., price adjustment)"""
+    type: TicketType | None = None
+    price: int | None = Field(default=None, ge=0, description="Price in cents")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TicketTypeResponse(TicketTypeBase):
+    """Schema for returning batch data"""
+    id: int
+    event_id: int
+    quantity_sold: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 6. ORDER SCHEMAS
+# ==========================================
+class OrderBase(BaseModel):
+    event_id: int
+    total_amount: int = Field(..., ge=0, description="Sum of values in cents")
+
+
+class OrderCreate(OrderBase):
+    """Schema to initiate a checkout request (POST)"""
+    buyer_id: int
+    idempotency_key: str = Field(..., max_length=255)
+
+
+class OrderUpdate(BaseModel):
+    """Schema for updating payment/order status"""
+    payment_status: PaymentStatus | None = None
+    order_status: OrderStatus | None = None
+    stripe_payment_id: str | None = Field(default=None, max_length=255)
+    completed_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderResponse(OrderBase):
+    """Schema for returning the order summary (GET)"""
+    id: int
+    buyer_id: int
+    payment_status: PaymentStatus
+    stripe_payment_id: str | None = None
+    idempotency_key: str
+    order_status: OrderStatus
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 7. TICKET SCHEMAS (Tickets Issued)
+# ==========================================
+class TicketBase(BaseModel):
+    holder_name: str = Field(..., max_length=255)
+    holder_cpf: str = Field(..., pattern=CPF_REGEX, max_length=14)
+
+
+class TicketCreate(TicketBase):
+    """Schema for generating a personalized ticket linked to an order"""
+    order_id: int
+    ticket_type_id: int
+    price_paid: int = Field(..., ge=0)
+
+
+class TicketUpdate(BaseModel):
+    """Schema for listing the user's tickets (GET /meus-ingressos)"""
+    holder_name: str | None = Field(default=None, max_length=255)
+    holder_cpf: str | None = Field(default=None, pattern=CPF_REGEX, max_length=14)
+    status: TicketStatus | None = None
+
+    @field_validator("holder_cpf")
+    @classmethod
+    def validate_holder_cpf(cls, v: str) -> str:
+        """
+        Validate holder CPF and cleans the format.
+        """
+        if not validate_cpf(v):
+            raise ValueError("CPF do titular inválido.")
+
+        # Cleans to the format with dots and -
+        cpf_clean = v.replace(".", "").replace("-", "")
+        return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-{cpf_clean[9:11]}"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TicketResponse(TicketBase):
+    """Schema for listing the user's tickets (GET /meus-ingressos)"""
+    id: int
+    order_id: int
+    ticket_type_id: int
+    price_paid: int
+    status: TicketStatus
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# 8. AUDIT LOG SCHEMAS
+# ==========================================
+class AuditLogBase(BaseModel):
+    action: str = Field(..., max_length=50)
+    auditable_type: str = Field(..., max_length=50)
+    auditable_id: int
+    old_values: dict[str, Any] | None = None
+    new_values: dict[str, Any] | None = None
+    ip_address: str | None = Field(default=None, pattern=IP_REGEX, max_length=45)
+    user_agent: str | None = Field(default=None, max_length=255)
+
+
+class AuditLogCreate(AuditLogBase):
+    """Schema for recording an audit event"""
+    user_id: int | None = None
+
+
+class AuditLogResponse(AuditLogBase):
+    """Schema for reading the audit log"""
+    id: int
+    user_id: int | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

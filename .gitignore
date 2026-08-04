@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+.pytest_cache
+.coverage
+coverage.xml
+
+# Environment
+.env
+.env.local
+
+# Others
+*.pyc
+.DS_Store
+*.egg-info/
+dist/
+build/
+
+# Project specific
+app/static/images/events/*
+!app/static/images/events/.gitkeep
+cookies.txt
+token.txt
+*.cookies
+*.tokens

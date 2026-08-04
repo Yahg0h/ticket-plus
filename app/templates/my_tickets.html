@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Ingressos - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        <!-- Header -->
+        <div class="mb-5">
+            <h1 class="mb-2"><i class="bi bi-ticket-perforated"></i> Meus Ingressos</h1>
+            <p class="text-muted">Seus ingressos comprados e disponíveis</p>
+        </div>
+
+        <!-- Empty State -->
+        {% if not tickets %}
+            <div class="alert alert-info text-center py-5">
+                <div style="font-size: 60px; margin-bottom: 15px;"><i class="bi bi-ticket"></i></div>
+                <h5>Nenhum ingresso encontrado</h5>
+                <p class="text-muted mb-3">Você ainda não comprou nenhum ingresso.</p>
+                <a href="/events" class="btn btn-primary">Explorar Eventos</a>
+            </div>
+        {% else %}
+            <!-- Tickets Grid -->
+            <div class="row g-3 mb-5">
+                {% for ticket in tickets %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card shadow-sm h-100 ticket-card">
+                            <!-- Ticket Header -->
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">Ingresso #{{ ticket["id"] }}</h6>
+                                        <small class="text-muted">Pedido #{{ ticket["order_id"] }}</small>
+                                    </div>
+                                    <!-- Status Badge -->
+                                    {% if ticket["status"] == "valid" %}
+                                        <span class="badge bg-success">Válido <i class="bi bi-check-circle-fill"></i></span>
+                                    {% elif ticket["status"] == "used" %}
+                                        <span class="badge bg-secondary">Utilizado ✓</span>
+                                    {% elif ticket["status"] == "cancelled" %}
+                                        <span class="badge bg-danger">Cancelado ✗</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Ticket Body -->
+                            <div class="card-body">
+                                <!-- Holder Info -->
+                                <p class="mb-2 small">
+                                    <strong>Titular:</strong><br>
+                                    {{ ticket["holder_name"] }}
+                                </p>
+                                <p class="mb-3 small">
+                                    <strong>CPF:</strong><br>
+                                    {{ ticket["holder_cpf"] }}
+                                </p>
+
+                                <!-- Divider -->
+                                <hr class="my-3">
+
+                                <!-- Pricing Info -->
+                                <p class="mb-2 small">
+                                    <strong>Valor Pago:</strong><br>
+                                    <span class="text-primary fw-bold">R$ {{ "%.2f" | format(ticket["price_paid"] / 100) }}</span>
+                                </p>
+                                <p class="mb-0 small text-muted">
+                                    <strong>Data:</strong><br>
+                                    {{ ticket["created_at"].strftime('%d/%m/%Y às %H:%M') if ticket["created_at"] else 'N/A' }}
+                                </p>
+                            </div>
+
+                            <!-- Ticket Footer -->
+                            <div class="card-footer bg-light">
+                                <a href="/tickets/{{ ticket['id'] }}" class="btn btn-sm btn-primary w-100">
+                                    Ver Detalhes e PDF <i class="bi bi-file-text"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="card-title mb-3"><i class="bi bi-bar-chart"></i> Resumo</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Total de Ingressos</p>
+                            <p class="mb-0 fw-bold fs-5">{{ tickets | length }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Ingressos Válidos</p>
+                            <p class="mb-0 fw-bold fs-5 text-success">
+                                {% set valid_count = tickets | selectattr("status", "equalto", "valid") | list | length %}
+                                {{ valid_count }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="mb-1 small text-muted">Ingressos Utilizados</p>
+                            <p class="mb-0 fw-bold fs-5 text-secondary">
+                                {% set used_count = tickets | selectattr("status", "equalto", "used") | list | length %}
+                                {{ used_count }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                <a href="/events" class="btn btn-primary btn-lg">
+                    Continuar Comprando <i class="bi bi-cart"></i>
+                </a>
+                <a href="/" class="btn btn-outline-secondary">
+                    Voltar à Página Inicial
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

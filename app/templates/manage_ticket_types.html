@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Lotes - {{ event.title }} - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Cabeçalho com Info do Evento -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1><i class="bi bi-ticket"></i> Gerenciar Lotes de Ingressos</h1>
+                <h5 class="text-muted">{{ event.title }}</h5>
+            </div>
+            <a href="/events/my-events" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+        </div>
+
+        <!-- Resumo do Evento -->
+        <div class="card shadow-sm bg-light">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p class="text-muted mb-1">Data</p>
+                        <strong>{{ event.start_date.strftime('%d/%m/%Y %H:%M') }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="text-muted mb-1">Local</p>
+                        <strong>{{ event.city }}, {{ event.state }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="text-muted mb-1">Capacidade Total</p>
+                        <strong>{{ event.total_capacity }} pessoas</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="text-muted mb-1">Ingressos Disponíveis</p>
+                        <strong>{{ event.available_tickets }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Lotes Existentes -->
+    {% if ticket_types %}
+        <div class="card shadow-sm mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-list"></i> Lotes Configurados</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Preço (R$)</th>
+                                <th>Disponíveis</th>
+                                <th>Vendidos</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in ticket_types %}
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            {% if ticket.type == 'standard' %}
+                                                <i class="bi bi-ticket-perforated"></i> Padrão
+                                            {% elif ticket.type == 'vip' %}
+                                                <i class="bi bi-crown"></i> VIP
+                                            {% elif ticket.type == 'early_bird' %}
+                                                <i class="bi bi-bird"></i> Early Bird
+                                            {% elif ticket.type == 'group' %}
+                                                <i class="bi bi-people"></i> Grupo
+                                            {% endif %}
+                                        </strong>
+                                    </td>
+                                    <td>R$ {{ "%.2f"|format(ticket.price / 100) }}</td>
+                                    <td><span class="badge bg-success">{{ ticket.quantity_available }}</span></td>
+                                    <td><span class="badge bg-info">{{ ticket.quantity_sold }}</span></td>
+                                    <td>{{ ticket.quantity_available + ticket.quantity_sold }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="/events/{{ event.id }}/lotes/{{ ticket.id }}/editar" class="btn btn-warning" title="Editar"><i class="bi bi-pencil"></i></a>
+                                            <form method="POST" action="/events/{{ event.id }}/lotes/{{ ticket.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este lote?');">
+                                                <!-- CSRF Token -->
+                                                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                                                
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Deletar"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle"></i> Nenhum lote configurado</h5>
+            <p class="mb-0">Adicione lotes abaixo para começar a vender ingressos.</p>
+        </div>
+    {% endif %}
+
+    <!-- Formulário para Adicionar Novo Lote -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Adicionar Novo Lote</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/events/{{ event.id }}/lotes">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                
+                <div class="row">
+                    <!-- Tipo de Lote -->
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Tipo de Ingresso *</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="standard"><i class="bi bi-ticket-perforated"></i> Ingresso Padrão</option>
+                                <option value="vip"><i class="bi bi-crown"></i> VIP</option>
+                                <option value="early_bird"><i class="bi bi-bird"></i> Early Bird</option>
+                                <option value="group"><i class="bi bi-people"></i> Grupo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Preço -->
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Preço (R$) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    id="price" 
+                                    name="price" 
+                                    placeholder="100.00"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="quantity_available" class="form-label">Quantidade de Ingressos *</label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="quantity_available" 
+                                name="quantity_available" 
+                                placeholder="100"
+                                min="1"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Botão Adicionar -->
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-circle"></i> Adicionar Lote</button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="alert alert-info small">
+                    <strong><i class="bi bi-lightbulb"></i> Dicas:</strong>
+                    <ul class="mb-0">
+                        <li>Você pode criar múltiplos lotes com preços e tipos diferentes</li>
+                        <li>A quantidade total de ingressos de todos os lotes não pode exceder a capacidade do evento</li>
+                        <li>Não é possível deletar lotes que já têm ingressos vendidos</li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Voltar -->
+    <div class="mt-4 mb-5">
+        <a href="/events/my-events" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar aos Meus Eventos</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Erro {{ status_code }} - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-12">
+            <!-- Error Card -->
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5 text-center">
+                    
+                    <!-- Error Icon based on status code -->
+                    <div class="mb-4">
+                        {% if status_code == 404 %}
+                            <div style="font-size: 4rem; color: #ffc107;">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold text-dark mt-3">Página não encontrada</h1>
+                        {% elif status_code == 403 %}
+                            <div style="font-size: 4rem; color: #dc3545;">
+                                <i class="bi bi-lock-fill"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold text-dark mt-3">Acesso negado</h1>
+                        {% elif status_code == 500 %}
+                            <div style="font-size: 4rem; color: #dc3545;">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold text-dark mt-3">Erro interno do servidor</h1>
+                        {% elif status_code == 422 %}
+                            <div style="font-size: 4rem; color: #fd7e14;">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold text-dark mt-3">Dados inválidos</h1>
+                        {% else %}
+                            <div style="font-size: 4rem; color: #6c757d;">
+                                <i class="bi bi-exclamation-octagon-fill"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold text-dark mt-3">Erro {{ status_code }}</h1>
+                        {% endif %}
+                    </div>
+
+                    <!-- Error Code Badge -->
+                    <div class="mb-4">
+                        <span class="badge bg-secondary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                            Código de erro: <strong>{{ status_code }}</strong>
+                        </span>
+                    </div>
+
+                    <!-- Error Message -->
+                    <p class="lead text-muted mb-4">
+                        {{ detail }}
+                    </p>
+
+                    <!-- Error Descriptions -->
+                    <div class="alert alert-light text-start mb-4" style="border-left: 4px solid #0d6efd;">
+                        {% if status_code == 404 %}
+                            <p class="mb-0">
+                                <small>A página que você está procurando não existe ou foi movida. Verifique a URL e tente novamente.</small>
+                            </p>
+                        {% elif status_code == 403 %}
+                            <p class="mb-0">
+                                <small>Você não tem permissão para acessar este recurso. Se acredita que isto é um erro, entre em contato com o suporte.</small>
+                            </p>
+                        {% elif status_code == 500 %}
+                            <p class="mb-0">
+                                <small>Ocorreu um erro inesperado no servidor. Nossa equipe foi notificada. Tente novamente em alguns instantes.</small>
+                            </p>
+                        {% elif status_code == 422 %}
+                            <p class="mb-0">
+                                <small>Os dados enviados não são válidos. Por favor, verifique os campos do formulário e tente novamente.</small>
+                            </p>
+                        {% else %}
+                            <p class="mb-0">
+                                <small>Ocorreu um erro ao processar sua requisição. Tente novamente mais tarde.</small>
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a href="/" class="btn btn-primary btn-lg">
+                            <i class="bi bi-house-door"></i> Voltar para a página inicial
+                        </a>
+                        <a href="/events" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-calendar-event"></i> Explorar eventos
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Support Info -->
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    Precisa de ajuda? 
+                    <a href="/about" class="text-decoration-none">Veja a página de contato</a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .card {
+        animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+</style>
+
+{% endblock %}

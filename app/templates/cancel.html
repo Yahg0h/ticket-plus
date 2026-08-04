@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento Cancelado - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+        <!-- Cancel Header -->
+        <div class="text-center mb-5">
+            <div class="mb-4">
+                <span style="font-size: 80px;"><i class="bi bi-x-circle-fill"></i></span>
+            </div>
+            <h1 class="mb-2">Pagamento Cancelado</h1>
+            <p class="text-muted lead">Sua compra foi cancelada com sucesso</p>
+        </div>
+
+        <!-- Cancel Info Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4"><i class="bi bi-info-circle"></i> O que aconteceu?</h5>
+
+                <p class="mb-3">
+                    Você optou por cancelar seu pedido. Nenhum valor foi cobrado no seu cartão.
+                </p>
+
+                <div class="alert alert-warning mb-4">
+                    <strong>Aviso:</strong> Seu pedido foi marcado como cancelado em nosso sistema. Se você tiver transferido dinheiro ou se viu uma cobrança, este será revertido em 3-5 dias úteis.
+                </div>
+
+                <h6 class="mb-3">Você pode:</h6>
+                <ul class="mb-4">
+                    <li>Explorar outros eventos e tentar novamente</li>
+                    <li>Ajustar a quantidade de ingressos desejados</li>
+                    <li>Entrar em contato conosco se tiver dúvidas</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Recommendation Section -->
+        <div class="alert alert-info mb-4">
+            <h6 class="mb-3"><i class="bi bi-lightbulb"></i> Sugestões</h6>
+            <p class="mb-2">
+                Que tal explorar esses eventos populares?
+            </p>
+            <a href="/events" class="btn btn-sm btn-outline-info">
+                Ver Todos os Eventos
+            </a>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <a href="/events" class="btn btn-primary btn-lg">
+                Explorar Eventos <i class="bi bi-film"></i>
+            </a>
+            <a href="/meus-ingressos" class="btn btn-outline-primary btn-lg">
+                Meus Ingressos <i class="bi bi-ticket-perforated"></i>
+            </a>
+            <a href="/" class="btn btn-outline-secondary btn-lg">
+                Voltar à Página Inicial
+            </a>
+        </div>
+
+        <!-- Support Info -->
+        <div class="alert alert-light mt-5 text-center small">
+            <p class="mb-2">
+                <strong>Teve um problema?</strong>
+            </p>
+            <p class="mb-2">
+                Estamos aqui para ajudar. Entre em contato conosco pelo email:
+            </p>
+            <p class="mb-0">
+                <strong>support@ticketplus.com</strong>
+            </p>
+        </div>
+
+        <!-- FAQ Section (Optional) -->
+        <div class="mt-5 pt-4 border-top">
+            <h6 class="mb-3"><i class="bi bi-question-circle"></i> Perguntas Frequentes</h6>
+            
+            <div class="accordion" id="faqAccordion">
+                <!-- FAQ 1 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button 
+                            class="accordion-button collapsed" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#faq1"
+                        >
+                            Como faço para comprar ingressos novamente?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Você pode voltar à página de um evento e iniciar uma nova compra. O processo é rápido e simples!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button 
+                            class="accordion-button collapsed" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#faq2"
+                        >
+                            Fui cobrado? Quando recebo meu reembolso?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Se você foi cobrado por engano, o reembolso pode levar 3-5 dias úteis para aparecer em sua conta. Se o reembolso não chegar após 7 dias, entre em contato conosco.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button 
+                            class="accordion-button collapsed" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#faq3"
+                        >
+                            Posso tentar um método de pagamento diferente?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Sim! Você pode voltar e tentar novamente. Atualmente aceitamos cartões de crédito e débito via Stripe.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

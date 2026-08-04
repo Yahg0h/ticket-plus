@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - TicketPlus{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="display-4">Admin Dashboard</h1>
+            <p class="lead">Bem-vindo ao painel administrativo do TicketPlus</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gerenciar Usuários -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Usuários</h5>
+                    <p class="card-text">Visualize e gerencie usuários do sistema</p>
+                    <a href="/admin/users" class="btn btn-primary">Gerenciar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gerenciar Eventos -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Eventos</h5>
+                    <p class="card-text">Visualize e gerencie eventos da plataforma</p>
+                    <a href="/admin/events" class="btn btn-primary">Gerenciar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Audit Logs</h5>
+                    <p class="card-text">Visualize todas as ações do sistema</p>
+                    <a href="/admin/audit-logs" class="btn btn-primary">Ver Logs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <!-- Ordens (View Only) -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Ordens</h5>
+                    <p class="card-text">Visualize ordens de compra (somente leitura)</p>
+                    <a href="/admin/orders" class="btn btn-info">Visualizar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingressos (View Only) -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Ingressos</h5>
+                    <p class="card-text">Visualize ingressos emitidos (somente leitura)</p>
+                    <a href="/admin/tickets" class="btn btn-info">Visualizar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
