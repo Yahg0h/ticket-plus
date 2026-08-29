@@ -67,17 +67,30 @@ jobs:
           asyncio.run(wait_for_mysql())
           "
       
-      # 5. Create test database
-      - name: Create test database
+      # 5. Create test database and apply schema
+      - name: Create test database and apply schema
         run: |
           python -c "
           import pymysql
+          
           conn = pymysql.connect(host='127.0.0.1', user='root', password='root')
           cursor = conn.cursor()
+          
           cursor.execute('CREATE DATABASE IF NOT EXISTS ticket_plus_test')
+          cursor.execute('USE ticket_plus_test')
+          
+          with open('schema.sql', 'r', encoding='utf-8') as f:
+              schema_sql = f.read()
+          
+          for statement in schema_sql.split(';'):
+              stmt = statement.strip()
+              if stmt:
+                  cursor.execute(stmt)
+          
+          conn.commit()
           cursor.close()
           conn.close()
-          print('✅ Test database successfully created')
+          print('✅ Test database and tables successfully created')
           "
       
       # 6. Run unit tests
