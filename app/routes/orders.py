@@ -275,6 +275,9 @@ async def post_checkout(
     # Calculate total amount to be paid
     total_amount = await calculate_order_total(ticket_type_id, quantity)
 
+    if total_amount is None:
+        raise HTTPException(status_code=400, detail="Lote de ingressos inválido ou preço não encontrado.")
+
     # Create order in the database
     order_id = await create_order(
         user_id, 

@@ -74,7 +74,7 @@ async def event_with_ticket_type(organizer):
     ticket_type_id = await create_ticket_type(
         event_id=event_id,
         type="standard",
-        price=100,  # R$ 100
+        price=10000,  # 10000 cents = R$ 100
         quantity_available=50
     )
     

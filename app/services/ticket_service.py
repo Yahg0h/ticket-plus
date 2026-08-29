@@ -21,7 +21,8 @@ async def create_ticket(
     ticket_type_id: int,
     holder_name: str,
     holder_cpf: str,
-    price_paid: int
+    price_paid: int,
+    conn=None
 ) -> int:
     """
     Create a new ticket in the database.
@@ -32,6 +33,7 @@ async def create_ticket(
         holder_name: Name of the ticket holder
         holder_cpf: CPF of the ticket holder (format: 000.000.000-00)
         price_paid: Price paid for this ticket in cents
+        conn: Optional SQLAlchemy connection
     
     Returns:
         int: The newly created ticket's ID
@@ -39,26 +41,28 @@ async def create_ticket(
     Raises:
         ValueError: If database operation fails or missing owner fields
     """
+    if conn is None:
+        async with engine.connect() as new_conn:
+            return await create_ticket(order_id, ticket_type_id, holder_name, holder_cpf, price_paid, conn=new_conn)
+            
     # Check if the ticket has a owner attached to it, if not, raise ValueError
     if not holder_name or not holder_cpf:
         raise ValueError("Um ingresso deve ter um nome atribuído a ele.")
 
-    # Connect to database
-    async with engine.connect() as conn:
-        # INSERT ticket info into the DB
-        insert_query = """
-        INSERT INTO tickets (order_id, ticket_type_id, holder_name, holder_cpf, price_paid)
-        VALUES (:order_id, :ticket_type_id, :holder_name, :holder_cpf, :price_paid)
-        """
-        await conn.execute(text(insert_query), {"order_id": order_id, "ticket_type_id": ticket_type_id, "holder_name": holder_name, "holder_cpf": holder_cpf, "price_paid": price_paid})
-        await conn.commit()
+    # INSERT ticket info into the DB
+    insert_query = """
+    INSERT INTO tickets (order_id, ticket_type_id, holder_name, holder_cpf, price_paid)
+    VALUES (:order_id, :ticket_type_id, :holder_name, :holder_cpf, :price_paid)
+    """
+    await conn.execute(text(insert_query), {"order_id": order_id, "ticket_type_id": ticket_type_id, "holder_name": holder_name, "holder_cpf": holder_cpf, "price_paid": price_paid})
+    await conn.commit()
 
-        # Fetch the id of the recently created ticket
-        query = await conn.execute(text("SELECT id FROM tickets WHERE id = LAST_INSERT_ID()"))
-        ticket_id = query.scalar_one_or_none()
+    # Fetch the id of the recently created ticket
+    query = await conn.execute(text("SELECT id FROM tickets WHERE id = LAST_INSERT_ID()"))
+    ticket_id = query.scalar_one_or_none()
 
-        # Return it
-        return ticket_id
+    # Return it
+    return ticket_id
 
 
 

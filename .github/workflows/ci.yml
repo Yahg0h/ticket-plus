@@ -42,7 +42,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov ruff mypy aiomysql
+          pip install pytest pytest-asyncio pytest-cov ruff mypy aiomysql pymysql
       
       # 4. Wait MySQL be ready
       - name: Wait MySQl be ready
@@ -77,7 +77,7 @@ jobs:
           cursor.execute('CREATE DATABASE IF NOT EXISTS ticket_plus_test')
           cursor.close()
           conn.close()
-          print('✅ Test database successfully created)
+          print('✅ Test database successfully created')
           "
       
       # 6. Run unit tests
@@ -85,7 +85,15 @@ jobs:
         run: |
           pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
         env:
-          TEST_DATABASE_URL: "mysql+aiomysql://root:root@127.0.0.1/ticket_plus_test"
+          DB_USER: "root"
+          DB_PASSWORD: "root"
+          DB_HOST: "127.0.0.1"
+          DB_PORT: "3306"
+          DB_NAME: "ticket_plus_test"
+          JWT_SECRET: "testsecret"
+          STRIPE_SECRET_KEY: "sk_test_123"
+          STRIPE_PUBLISHABLE_KEY: "pk_test_123"
+          STRIPE_WEBHOOK_SECRET: "whsec_123"
       
       # 7. Upload coverage to Codecov
       - name: Upload coverage to Codecov
