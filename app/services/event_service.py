@@ -242,7 +242,7 @@ async def update_event(
 
         # Now validate ONLY if the location has actually changed.
         if location_changed:
-            event_start = existing_event["start_date"]
+            event_start = start_date if start_date else existing_event["start_date"]
 
             # Make event_start timezone-aware if it's naive
             if isinstance(event_start, datetime) and not event_start.tzinfo:
@@ -301,13 +301,13 @@ async def update_event(
 
         if end_date:
             # Check if the event end_date is early than the event's current start_date
-            event_end = existing_event["end_date"]
+            event_start = start_date if start_date else existing_event["start_date"]
             
-            # Make event_end timezone-aware if it's naive
-            if isinstance(event_end, datetime) and not event_end.tzinfo:
-                event_end = event_end.replace(tzinfo=timezone.utc)
+            # Make event_start timezone-aware if it's naive
+            if isinstance(event_start, datetime) and not event_start.tzinfo:
+                event_start = event_start.replace(tzinfo=timezone.utc)
             
-            if end_date < event_end:
+            if end_date < event_start:
                 raise ValueError("A nova data de término do evento não pode ser anterior à data de início original.")
             else:
                 # Else, update
@@ -385,9 +385,6 @@ async def create_ticket_type(
     Returns:
         int: The newly created ticket type's ID
     """
-    # Convert the user's normal price value to cents (e.g, $ 100,00 -> 10000)
-    price_cents = price * 100
-
     # Connect to database
     async with engine.connect() as conn:
         # INSERT ticket type into DB
@@ -395,7 +392,7 @@ async def create_ticket_type(
         INSERT INTO ticket_types (event_id, type, price, quantity_available)
         VALUES (:event_id, :type, :price, :quantity_available)
         """
-        await conn.execute(text(ticket_query), {"event_id": event_id, "type": type, "price": price_cents, "quantity_available": quantity_available})
+        await conn.execute(text(ticket_query), {"event_id": event_id, "type": type, "price": price, "quantity_available": quantity_available})
         await conn.commit()
 
         # Fetch the id of the recently added ticket type and return it
@@ -475,8 +472,6 @@ async def update_ticket_type(
             params["type"] = type
 
         if price:
-            # Convert the user's normal price value to cents (e.g, $ 100,00 -> 10000)
-            price = price * 100
             updates.append("price = :price")
             params["price"] = price
 

@@ -111,7 +111,8 @@ async def get_orders_by_buyer(buyer_id: int) -> list[dict]:
 async def update_order_payment_status(
     order_id: int,
     payment_status: str,
-    stripe_payment_id: str | None = None
+    stripe_payment_id: str | None = None,
+    conn=None
 ) -> bool:
     """
     Update order payment status (after Stripe webhook).
@@ -120,41 +121,46 @@ async def update_order_payment_status(
         order_id: Order ID
         payment_status: New payment status (paid, failed, refunded)
         stripe_payment_id: Stripe payment intent ID (optional)
+        conn: Optional SQLAlchemy connection
     
     Returns:
         bool: True if successful
     """
-    async with engine.connect() as conn:
-        # Create a dyanmic query that changes based on the updates
-        updates = []
-        params = {"order_id": order_id}
+    if conn is None:
+        async with engine.connect() as new_conn:
+            return await update_order_payment_status(order_id, payment_status, stripe_payment_id, conn=new_conn)
+            
+    # Create a dyanmic query that changes based on the updates
+    updates = []
+    params = {"order_id": order_id}
 
-        if payment_status:
-            updates.append("payment_status = :payment_status")
-            params["payment_status"] = payment_status
-        if stripe_payment_id:
-            updates.append("stripe_payment_id = :stripe_payment_id")
-            params["stripe_payment_id"] = stripe_payment_id
+    if payment_status:
+        updates.append("payment_status = :payment_status")
+        params["payment_status"] = payment_status
+    if stripe_payment_id:
+        updates.append("stripe_payment_id = :stripe_payment_id")
+        params["stripe_payment_id"] = stripe_payment_id
 
-        if not updates:
-            # If there wan't any updates, just return True for what's current registered
-            return True
-        
-        # Base query with all selected updates
-        query = f"UPDATE orders SET {', '.join(updates)} WHERE id = :order_id"
-        
-        # UPDATE new information into the database
-        await conn.execute(text(query), params)
-        await conn.commit()
+    if not updates:
+        # If there wan't any updates, just return True for what's current registered
+        return True
+    
+    # Base query with all selected updates
+    query = f"UPDATE orders SET {', '.join(updates)} WHERE id = :order_id"
+    
+    # UPDATE new information into the database
+    await conn.execute(text(query), params)
+    await conn.commit()
 
     # Return success
-    return True 
+    return True
 
 
 async def update_order_status(
     order_id: int,
     order_status: str,
-    completed_at: str | None = None
+    completed_at: str | None = None,
+    conn=None
 ) -> bool:
     """
     Update order status.
@@ -163,32 +169,36 @@ async def update_order_status(
         order_id: Order ID
         order_status: New order status (confirmed, cancelled, completed)
         completed_at: Completion timestamp (optional)
+        conn: Optional SQLAlchemy connection
     
     Returns:
         bool: True if successful
     """
-    async with engine.connect() as conn:
-        # Create dyanmic query that changes based on updates
-        updates = []
-        params = {"order_id": order_id}
+    if conn is None:
+        async with engine.connect() as new_conn:
+            return await update_order_status(order_id, order_status, completed_at, conn=new_conn)
+            
+    # Create dyanmic query that changes based on updates
+    updates = []
+    params = {"order_id": order_id}
 
-        if order_status:
-            updates.append("order_status = :order_status")
-            params["order_status"] = order_status
-        if completed_at:
-            updates.append("completed_at = :completed_at")
-            params["completed_at"] = completed_at
-        
-        if not updates:
-            # If there wan't any updates, just return True for what's current registered
-            return True
+    if order_status:
+        updates.append("order_status = :order_status")
+        params["order_status"] = order_status
+    if completed_at:
+        updates.append("completed_at = :completed_at")
+        params["completed_at"] = completed_at
+    
+    if not updates:
+        # If there wan't any updates, just return True for what's current registered
+        return True
 
-        # Base query with all selected updates
-        query = f"UPDATE orders SET {', '.join(updates)} WHERE id = :order_id"
-        
-        # UPDATE new information into the database
-        await conn.execute(text(query), params)
-        await conn.commit()
+    # Base query with all selected updates
+    query = f"UPDATE orders SET {', '.join(updates)} WHERE id = :order_id"
+    
+    # UPDATE new information into the database
+    await conn.execute(text(query), params)
+    await conn.commit()
 
     # Return True if successful
     return True
@@ -288,10 +298,10 @@ async def process_successful_payment(order_id: int, stripe_payment_id: str) -> b
     
     async with engine.connect() as conn:
         # Update payment_status to paid
-        await update_order_payment_status(order_id, 'paid', stripe_payment_id)
+        await update_order_payment_status(order_id, 'paid', stripe_payment_id, conn=conn)
 
         # Update order_status to confirmed
-        await update_order_status(order_id, 'confirmed')
+        await update_order_status(order_id, 'confirmed', conn=conn)
 
         # Calculate price per ticket
         price_per_ticket = order["total_amount"] // order["quantity"]
@@ -303,7 +313,8 @@ async def process_successful_payment(order_id: int, stripe_payment_id: str) -> b
                 ticket_type_id=order["ticket_type_id"],
                 holder_name="Placeholder",  # To be filled later during collection in routes/tickets
                 holder_cpf="000.000.000-00",  # To be filled later during collection in routes/tickets
-                price_paid=price_per_ticket
+                price_paid=price_per_ticket,
+                conn=conn
             )
 
         # Update quantity_sold in ticket_types

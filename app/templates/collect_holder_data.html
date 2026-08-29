@@ -75,12 +75,12 @@
 
                                 <!-- Holder CPF -->
                                 <div class="mb-3">
-                                    <label for="holder_cpf" class="form-label">CPF do Titular *</label>
+                                    <label for="holder_cpf_{{ i }}" class="form-label">CPF do Titular *</label>
                                     <input 
                                         type="text" 
-                                        class="form-control" 
-                                        id="holder_cpf" 
-                                        name="holder_cpf"
+                                        class="form-control cpf-mask" 
+                                        id="holder_cpf_{{ i }}" 
+                                        name="holder_cpf_{{ i }}"
                                         placeholder="123.456.789-01"
                                         pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$"
                                         maxlength="14"

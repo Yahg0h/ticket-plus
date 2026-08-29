@@ -77,7 +77,7 @@ async def order_with_event(organizer, buyer):
     ticket_type_id = await create_ticket_type(
         event_id=event_id,
         type="standard",
-        price=100,
+        price=10000,
         quantity_available=50
     )
     

@@ -21,7 +21,8 @@ async def create_ticket(
     ticket_type_id: int,
     holder_name: str,
     holder_cpf: str,
-    price_paid: int
+    price_paid: int,
+    conn=None
 ) -> int:
     """
     Create a new ticket in the database.
@@ -32,6 +33,7 @@ async def create_ticket(
         holder_name: Name of the ticket holder
         holder_cpf: CPF of the ticket holder (format: 000.000.000-00)
         price_paid: Price paid for this ticket in cents
+        conn: Optional SQLAlchemy connection
     
     Returns:
         int: The newly created ticket's ID
@@ -39,26 +41,31 @@ async def create_ticket(
     Raises:
         ValueError: If database operation fails or missing owner fields
     """
-    # Check if the ticket has a owner attached to it, if not, raise ValueError
+    if conn is None:
+        # Open transaction and do a automatic commit after
+        async with engine.begin() as new_conn:
+            return await create_ticket(order_id, ticket_type_id, holder_name, holder_cpf, price_paid, conn=new_conn)
+            
     if not holder_name or not holder_cpf:
         raise ValueError("Um ingresso deve ter um nome atribuído a ele.")
 
-    # Connect to database
-    async with engine.connect() as conn:
-        # INSERT ticket info into the DB
-        insert_query = """
-        INSERT INTO tickets (order_id, ticket_type_id, holder_name, holder_cpf, price_paid)
-        VALUES (:order_id, :ticket_type_id, :holder_name, :holder_cpf, :price_paid)
-        """
-        await conn.execute(text(insert_query), {"order_id": order_id, "ticket_type_id": ticket_type_id, "holder_name": holder_name, "holder_cpf": holder_cpf, "price_paid": price_paid})
-        await conn.commit()
+    insert_query = """
+    INSERT INTO tickets (order_id, ticket_type_id, holder_name, holder_cpf, price_paid)
+    VALUES (:order_id, :ticket_type_id, :holder_name, :holder_cpf, :price_paid)
+    """
+    result = await conn.execute(
+        text(insert_query), 
+        {
+            "order_id": order_id, 
+            "ticket_type_id": ticket_type_id, 
+            "holder_name": holder_name, 
+            "holder_cpf": holder_cpf, 
+            "price_paid": price_paid
+        }
+    )
 
-        # Fetch the id of the recently created ticket
-        query = await conn.execute(text("SELECT id FROM tickets WHERE id = LAST_INSERT_ID()"))
-        ticket_id = query.scalar_one_or_none()
-
-        # Return it
-        return ticket_id
+    # Captura o ID gerado diretamente do resultado do cursor no MySQL
+    return result.lastrowid
 
 
 
@@ -155,39 +162,19 @@ async def update_ticket_holder(
     Raises:
         ValueError: If ticket not found or database operation fails
     """
-    async with engine.connect() as conn:
-        # Check if the ticket exists
+    async with engine.begin() as conn:
         query = await conn.execute(text("SELECT * FROM tickets WHERE id = :ticket_id"), {"ticket_id": ticket_id})
         existing_ticket = query.mappings().one_or_none()
 
-        # If it doesn't exist, raise ValueError
         if not existing_ticket:
             raise ValueError("Ingresso não encontrado.")
 
-        # Else, create a dyanmic query that changes the holder's info
-        updates = []
-        params = {"ticket_id": ticket_id}
+        updates = ["holder_name = :holder_name", "holder_cpf = :holder_cpf"]
+        params = {"ticket_id": ticket_id, "holder_name": holder_name, "holder_cpf": holder_cpf}
 
-        # Update the holder name
-        updates.append("holder_name = :holder_name")
-        params["holder_name"] = holder_name
-        
-        # Update the holder CPF
-        updates.append("holder_cpf = :holder_cpf")
-        params["holder_cpf"] = holder_cpf
+        update_query = f"UPDATE tickets SET {', '.join(updates)} WHERE id = :ticket_id"
+        await conn.execute(text(update_query), params)
 
-        if not updates:
-            # If there wan't any updates, just return True for what's current registered
-            return True
-
-        # Base query with all fields
-        query = f"UPDATE tickets SET {', '.join(updates)} WHERE id = :ticket_id"
-        
-        # UPDATE new information into the database
-        await conn.execute(text(query), params)
-        await conn.commit()
-
-    # Return success
     return True
 
 async def update_ticket_status(
@@ -207,20 +194,15 @@ async def update_ticket_status(
     Raises:
         ValueError: If ticket not found or database operation fails
     """
-    async with engine.connect() as conn:
-        # Check if the ticket exists
+    async with engine.begin() as conn:
         query = await conn.execute(text("SELECT * FROM tickets WHERE id = :ticket_id"), {"ticket_id": ticket_id})
         existing_ticket = query.mappings().one_or_none()
 
-        # If it doesn't, return ValueError
         if not existing_ticket:
             raise ValueError("Ingresso não encontrado.")
 
-        # Else, Update ticket's status
         await conn.execute(text("UPDATE tickets SET status = :status WHERE id = :ticket_id"), {"status": status, "ticket_id": ticket_id})
-        await conn.commit()
 
-    # Return success
     return True
 
 async def mark_ticket_as_used(ticket_id: int) -> bool:

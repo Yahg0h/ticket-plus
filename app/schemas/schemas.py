@@ -241,6 +241,14 @@ class TicketTypeBase(BaseModel):
     price: int = Field(..., ge=0, description="Price in cents (e.g., 10000 = R$ 100,00)")
     quantity_available: int = Field(..., ge=0)
 
+    @field_validator("price", mode="before")
+    @classmethod
+    def convert_price_to_cents(cls, v: Any) -> int:
+        if isinstance(v, (float, str)):
+            v_str = str(v).replace(',', '.')
+            return int(float(v_str) * 100)
+        return int(v)
+
 
 class TicketTypeCreate(TicketTypeBase):
     """Schema for registering an event ticket type"""
@@ -250,6 +258,16 @@ class TicketTypeUpdate(BaseModel):
     """Schema to update ticket type details (e.g., price adjustment)"""
     type: TicketType | None = None
     price: int | None = Field(default=None, ge=0, description="Price in cents")
+
+    @field_validator("price", mode="before")
+    @classmethod
+    def convert_price_to_cents(cls, v: Any) -> int | None:
+        if v is None:
+            return v
+        if isinstance(v, (float, str)):
+            v_str = str(v).replace(',', '.')
+            return int(float(v_str) * 100)
+        return int(v)
 
     model_config = ConfigDict(from_attributes=True)
 
