@@ -1,0 +1,46 @@
+services:
+  # ----------------------------------------
+  # MySQL 8.0 Database
+  # ----------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: tixplus_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tixplus_db
+      MYSQL_USER: tixplus_admin
+      MYSQL_PASSWORD: SenhaSegura123!
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql   # Persist data across restarts
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql  # Auto-apply schema on first run
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------
+  # FastAPI Application
+  # ----------------------------------------
+  api:
+    build: .
+    container_name: tixplus_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override DB_HOST to point to the Docker service name
+      DB_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app  # Hot-reload support (remove in production)
+
+volumes:
+  mysql_data:
